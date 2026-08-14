@@ -121,10 +121,13 @@ export function Demo() {
           boxShadow: "0 30px 80px -40px rgba(255,122,45,0.35)",
         }}
       >
+        {/* Canvas + its overlays share this box, so bottom/top offsets below measure against
+            the canvas itself — not the whole card (which also holds the controls further down). */}
+        <div className="relative">
         <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
 
         {/* Wood feed zone, overlaid on the lower part of the fire canvas */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-[86px] flex justify-center gap-6 sm:bottom-[100px] sm:gap-10">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[54px] flex justify-center gap-6 sm:bottom-[64px] sm:gap-10">
           {Array.from({ length: 5 }).map((_, slot) => (
             <div key={slot} className="pointer-events-auto flex h-12 w-12 items-center justify-center">
               <AnimatePresence>
@@ -178,6 +181,7 @@ export function Demo() {
               </motion.span>
             )}
           </AnimatePresence>
+        </div>
         </div>
 
         {/* Controls + readouts */}
