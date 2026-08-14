@@ -24,6 +24,17 @@ export type Dict = {
   badges: { firekeeper: string; ember: string; kindling: string };
   langLabel: string;
   brasas: string;
+  rounds: string;
+  profile: {
+    rank: string;
+    of: string;
+    roundsPlayed: string;
+    share: string;
+    copied: string;
+    back: string;
+    notFound: string;
+    notFoundBody: string;
+  };
 };
 
 const en: Dict = {
@@ -54,6 +65,17 @@ const en: Dict = {
   badges: { firekeeper: "Firekeeper", ember: "Ember", kindling: "Kindling" },
   langLabel: "ES",
   brasas: "embers",
+  rounds: "rounds",
+  profile: {
+    rank: "Rank",
+    of: "of",
+    roundsPlayed: "rounds played",
+    share: "Share",
+    copied: "Link copied",
+    back: "Back to the Wall",
+    notFound: "No such guardian",
+    notFoundBody: "This name isn't on the Wall yet.",
+  },
 };
 
 const es: Dict = {
@@ -84,6 +106,17 @@ const es: Dict = {
   badges: { firekeeper: "Guardián", ember: "Brasa", kindling: "Chispa" },
   langLabel: "EN",
   brasas: "brasas",
+  rounds: "rondas",
+  profile: {
+    rank: "Puesto",
+    of: "de",
+    roundsPlayed: "rondas jugadas",
+    share: "Compartir",
+    copied: "Enlace copiado",
+    back: "Volver al muro",
+    notFound: "Guardián no encontrado",
+    notFoundBody: "Este nombre aún no está en el muro.",
+  },
 };
 
 export const DICTS: Record<Lang, Dict> = { en, es };

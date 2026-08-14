@@ -11,9 +11,14 @@ import {
   useTransform,
   type Variants,
 } from "framer-motion";
+import Link from "next/link";
 import { Flame, Crown, ArrowUpRight, Search, Languages } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
-import { DICTS, type Lang, type Dict } from "@/lib/i18n";
+import { DICTS, type Dict } from "@/lib/i18n";
+import { useLang } from "./useLang";
+
+// Deep-linkable profile URL for a guardian.
+export const guardianHref = (name: string) => `/guardians/${encodeURIComponent(name)}`;
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const MEDAL = ["var(--gold)", "var(--silver)", "var(--bronze)"];
@@ -33,21 +38,11 @@ const podiumItem: Variants = {
 
 export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const reduce = useReducedMotion();
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useLang();
   const [tf, setTf] = useState<Timeframe>("all");
   const [q, setQ] = useState("");
 
-  // English default; remember the user's choice.
-  useEffect(() => {
-    const saved = window.localStorage.getItem("refugio-lang");
-    if (saved === "en" || saved === "es") setLang(saved);
-  }, []);
-  useEffect(() => {
-    window.localStorage.setItem("refugio-lang", lang);
-    document.documentElement.lang = lang;
-  }, [lang]);
-
-  // Auto-refresh: when the data is real (Supabase), poll the active timeframe every 30s so
+  // Auto-refresh: when the data is real (KV), poll the active timeframe every 30s so
   // the Wall stays live without a reload. The layout animation handles any reordering.
   const [frames, setFrames] = useState(bundle.frames);
   useEffect(() => {
@@ -156,7 +151,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                 exit={reduce ? undefined : { opacity: 0, y: -10 }}
                 whileHover={reduce ? undefined : { y: -3 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="flex items-center gap-4 rounded-xl border px-4 py-3.5"
+                className="rounded-xl border"
                 style={{
                   borderColor: match ? "var(--line-violet)" : "var(--line)",
                   background: match
@@ -164,17 +159,23 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                     : "linear-gradient(180deg, var(--surface), var(--ground-2))",
                 }}
               >
-                <span className="font-mono-num w-7 shrink-0 text-center text-sm" style={{ color: "var(--ash-dim)" }}>
-                  {rank + 1}
-                </span>
-                <GuardianDot />
-                <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="truncate text-[15px]" style={{ color: "var(--warm-white)" }}>
-                    {g.displayName}
+                <Link
+                  href={guardianHref(g.displayName)}
+                  className="flex items-center gap-4 px-4 py-3.5"
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  <span className="font-mono-num w-7 shrink-0 text-center text-sm" style={{ color: "var(--ash-dim)" }}>
+                    {rank + 1}
                   </span>
-                  <Badge brasas={g.brasas} d={d} />
-                </span>
-                <Brasas value={g.brasas} reduce={!!reduce} />
+                  <GuardianDot />
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="truncate text-[15px]" style={{ color: "var(--warm-white)" }}>
+                      {g.displayName}
+                    </span>
+                    <Badge brasas={g.brasas} d={d} />
+                  </span>
+                  <Brasas value={g.brasas} reduce={!!reduce} />
+                </Link>
               </motion.li>
             );
           })}
@@ -337,6 +338,11 @@ function PodiumCard({
         boxShadow: isFirst ? "0 26px 60px -32px rgba(255,122,45,0.75)" : "none",
       }}
     >
+      <Link
+        href={guardianHref(guardian.displayName)}
+        className="flex w-full flex-col items-center"
+        style={{ color: "inherit", textDecoration: "none" }}
+      >
       {isFirst && (
         <motion.div
           animate={reduce ? undefined : { y: [0, -3, 0] }}
@@ -368,6 +374,7 @@ function PodiumCard({
       <div className="mt-2">
         <Badge brasas={guardian.brasas} d={d} />
       </div>
+      </Link>
     </motion.div>
   );
 }
