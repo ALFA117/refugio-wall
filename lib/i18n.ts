@@ -54,6 +54,11 @@ export type Dict = {
     missedToast: string;
     backToWall: string;
     tryLive: string;
+    play: string;
+    difficulty: string;
+    modes: { easy: string; normal: string; hard: string };
+    streak: string;
+    best: string;
   };
 };
 
@@ -121,6 +126,11 @@ const en: Dict = {
     missedToast: "Missed…",
     backToWall: "Back to the Wall",
     tryLive: "This is a simplified web version — the real scene runs on Decentraland with real players.",
+    play: "Play",
+    difficulty: "Difficulty",
+    modes: { easy: "Easy", normal: "Normal", hard: "Hard" },
+    streak: "Streak",
+    best: "Best",
   },
 };
 
@@ -188,6 +198,11 @@ const es: Dict = {
     missedToast: "Se apagó…",
     backToWall: "Volver al muro",
     tryLive: "Esta es una versión web simplificada — la escena real corre en Decentraland con jugadores reales.",
+    play: "Jugar",
+    difficulty: "Dificultad",
+    modes: { easy: "Fácil", normal: "Normal", hard: "Difícil" },
+    streak: "Racha",
+    best: "Mejor",
   },
 };
 
