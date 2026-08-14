@@ -118,7 +118,11 @@ export function Demo() {
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
+      {/* mode="sync" (the default) — deliberately NOT "wait": gating the new phase's mount on
+          the old one's exit animation finishing means a tab that loses focus/visibility right
+          at the transition (rAF pauses in hidden tabs) could get stuck showing stale content
+          indefinitely. Enter and exit run independently instead. */}
+      <AnimatePresence>
         {phase === "start" ? (
           <StartScreen
             key="start"
