@@ -119,7 +119,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       <div className="relative z-10 flex justify-end">
         <button
           onClick={handleLangClick}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
           style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
           aria-label="Switch language"
         >
@@ -231,7 +231,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                     onClick={() => setExpanded((prev) => (prev === g.displayName ? null : g.displayName))}
                     aria-expanded={isOpen}
                     aria-label={d.profile.roundsPlayed}
-                    className="shrink-0 px-3 py-3.5 transition-colors hover:text-[var(--warm-white)]"
+                    className="flex min-w-11 shrink-0 items-center justify-center self-stretch px-3 transition-colors hover:text-[var(--warm-white)]"
                     style={{ color: "var(--ash-dim)", background: "transparent", border: "none", cursor: "pointer" }}
                   >
                     <motion.span
@@ -537,7 +537,7 @@ function Filters({
             role="tab"
             aria-selected={active}
             onClick={() => setTf(o.key)}
-            className="relative rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
+            className="relative flex min-h-11 items-center justify-center rounded-full px-3.5 text-[13px] font-medium transition-colors"
             style={{ color: active ? "#1a0d04" : "var(--ash)" }}
           >
             {active && (
@@ -559,7 +559,7 @@ function Filters({
 function SearchBox({ d, q, setQ }: { d: Dict; q: string; setQ: (s: string) => void }) {
   return (
     <label
-      className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2"
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5"
       style={{ borderColor: "var(--line)", background: "var(--surface)" }}
     >
       <Search size={15} style={{ color: "var(--ash-dim)" }} />
