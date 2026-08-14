@@ -39,6 +39,22 @@ export type Dict = {
     notFoundBody: string;
     viewFull: string;
   };
+  demo: {
+    eyebrow: string;
+    title: string;
+    titleEm: string;
+    subtitle: string;
+    addGuardian: string;
+    emptyCircle: string;
+    intensityLabel: string;
+    fireHealth: string;
+    feedHint: string;
+    feedPrompt: string;
+    fedToast: string;
+    missedToast: string;
+    backToWall: string;
+    tryLive: string;
+  };
 };
 
 const en: Dict = {
@@ -54,7 +70,7 @@ const en: Dict = {
   you: "you",
   footerLive: "Updates as rounds complete in the scene.",
   footerPreview: "Preview data — goes live once the scene starts pushing rounds.",
-  cta: { scene: "Enter the scene", demo: "Watch the demo", github: "GitHub" },
+  cta: { scene: "Enter the scene", demo: "Try it in your browser", github: "GitHub" },
   howTitle: "How the fire works",
   howEyebrow: "The scene",
   systems: [
@@ -89,6 +105,23 @@ const en: Dict = {
     notFoundBody: "This name isn't on the Wall yet.",
     viewFull: "View full profile",
   },
+  demo: {
+    eyebrow: "Try it — no install",
+    title: "Feel the fire",
+    titleEm: "before you visit it.",
+    subtitle:
+      "This is the real mechanic, in your browser. Add guardians and watch the fire grow. Then keep it alive.",
+    addGuardian: "Someone arrives",
+    emptyCircle: "Empty the circle",
+    intensityLabel: "Fire intensity",
+    fireHealth: "Fire health",
+    feedHint: "Tap the wood before it burns out to feed the fire.",
+    feedPrompt: "Feed it!",
+    fedToast: "Fed!",
+    missedToast: "Missed…",
+    backToWall: "Back to the Wall",
+    tryLive: "This is a simplified web version — the real scene runs on Decentraland with real players.",
+  },
 };
 
 const es: Dict = {
@@ -104,7 +137,7 @@ const es: Dict = {
   you: "tú",
   footerLive: "Se actualiza cuando terminan rondas en la escena.",
   footerPreview: "Datos de muestra — se activa cuando la escena empiece a enviar rondas.",
-  cta: { scene: "Entrar a la escena", demo: "Ver el demo", github: "GitHub" },
+  cta: { scene: "Entrar a la escena", demo: "Pruébalo en tu navegador", github: "GitHub" },
   howTitle: "Cómo funciona el fuego",
   howEyebrow: "La escena",
   systems: [
@@ -138,6 +171,23 @@ const es: Dict = {
     notFound: "Guardián no encontrado",
     notFoundBody: "Este nombre aún no está en el muro.",
     viewFull: "Ver perfil completo",
+  },
+  demo: {
+    eyebrow: "Pruébalo — sin instalar nada",
+    title: "Siente el fuego",
+    titleEm: "antes de visitarlo.",
+    subtitle:
+      "Esta es la mecánica real, en tu navegador. Suma guardianes y mira crecer el fuego. Luego mantenlo vivo.",
+    addGuardian: "Alguien llega",
+    emptyCircle: "Vaciar el círculo",
+    intensityLabel: "Intensidad del fuego",
+    fireHealth: "Salud del fuego",
+    feedHint: "Toca la leña antes de que se apague para alimentar el fuego.",
+    feedPrompt: "¡Aliméntalo!",
+    fedToast: "¡Alimentado!",
+    missedToast: "Se apagó…",
+    backToWall: "Volver al muro",
+    tryLive: "Esta es una versión web simplificada — la escena real corre en Decentraland con jugadores reales.",
   },
 };
 

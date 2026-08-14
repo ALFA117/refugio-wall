@@ -321,7 +321,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </p>
         <div className="flex flex-wrap justify-center gap-2.5">
           <FooterLink href="#" label={d.cta.scene} />
-          <FooterLink href="#" label={d.cta.demo} />
+          <FooterLink href="/demo" label={d.cta.demo} />
           <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
         </div>
         <div className="mt-2 font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
@@ -766,7 +766,7 @@ function FooterLink({ href, label, external = false }: { href: string; label: st
 
 /* ---------------------------------------------------- Ambient ember canvas */
 
-function AmbientEmbers({ reduce }: { reduce: boolean }) {
+export function AmbientEmbers({ reduce }: { reduce: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 800], [0, 140]);
