@@ -47,8 +47,26 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Auto-refresh: when the data is real (Supabase), poll the active timeframe every 30s so
+  // the Wall stays live without a reload. The layout animation handles any reordering.
+  const [frames, setFrames] = useState(bundle.frames);
+  useEffect(() => {
+    if (bundle.source !== "supabase") return;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/leaderboard?timeframe=${tf}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { entries: Guardian[] };
+        setFrames((prev) => ({ ...prev, [tf]: data.entries }));
+      } catch {
+        /* keep last good data */
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, [tf, bundle.source]);
+
   const d = DICTS[lang];
-  const entries = bundle.frames[tf];
+  const entries = frames[tf];
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3, 10);
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean) as Guardian[];
@@ -168,6 +186,28 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           {d.noResults}
         </p>
       )}
+
+      {/* Screen-reader table: the leaderboard as structured data (visuals alone aren't
+          screen-reader friendly — WCAG). Hidden visually, announced to assistive tech. */}
+      <table className="sr-only">
+        <caption>{`${d.titlePre} ${d.titleEm} — ${d.filters[tf]}`}</caption>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">{d.titleEm}</th>
+            <th scope="col">{d.brasas}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((g, i) => (
+            <tr key={g.displayName}>
+              <td>{i + 1}</td>
+              <td>{g.displayName}</td>
+              <td>{g.brasas}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <HowItWorks d={d} reduce={!!reduce} />
 
