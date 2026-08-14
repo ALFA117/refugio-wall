@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
+import { Fraunces } from "next/font/google";
 import "./globals.css";
+
+// Self-hosted at build time (no runtime request to Google's CDN, no CLS, no CSP risk).
+// Fraunces: a soft, slightly dramatic serif with deep optical sizing — carries the
+// "firelight and old stories" mood better than a generic system serif fallback.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://refugio-azure.vercel.app"),
@@ -23,7 +35,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={fraunces.variable}>
       <body>{children}</body>
     </html>
   );

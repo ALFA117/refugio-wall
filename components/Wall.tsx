@@ -4,19 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import {
   motion,
   AnimatePresence,
-  useMotionValue,
   useMotionValueEvent,
-  animate,
   useReducedMotion,
   useScroll,
   useTransform,
   type Variants,
 } from "framer-motion";
 import Link from "next/link";
-import { Flame, Crown, ArrowUpRight, Search, Languages } from "lucide-react";
+import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { useLang } from "./useLang";
+import { TickerNumber } from "./TickerNumber";
 
 // Deep-linkable profile URL for a guardian.
 export const guardianHref = (name: string) => `/guardians/${encodeURIComponent(name)}`;
@@ -42,6 +41,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const [lang, setLang] = useLang();
   const [tf, setTf] = useState<Timeframe>("all");
   const [q, setQ] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   // Auto-refresh: when the data is real (KV), poll the active timeframe every 30s so
   // the Wall stays live without a reload. The layout animation handles any reordering.
@@ -71,13 +71,32 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const leader = entries[0] ?? null;
   const empty = entries.length === 0;
 
+  // "New record" pulse: only meaningful with real live data (auto-refresh polling), so this
+  // only ever fires when bundle.source === "live" and a fresh poll shows the leader's embers
+  // increased. First run just establishes the baseline — it never pulses on initial mount.
+  const leaderBaseline = useRef<number | null>(null);
+  const [recordPulse, setRecordPulse] = useState(false);
+  useEffect(() => {
+    if (!leader) return;
+    const prev = leaderBaseline.current;
+    leaderBaseline.current = leader.brasas;
+    if (prev !== null && leader.brasas > prev) {
+      setRecordPulse(true);
+      const t = setTimeout(() => setRecordPulse(false), 2200);
+      return () => clearTimeout(t);
+    }
+    // Only re-run when the embers value actually changes — `leader` is a fresh object
+    // reference every render, deliberately excluded to avoid firing on every poll no-op.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leader?.brasas]);
+
   const anim = (v: Variants) =>
     reduce ? {} : ({ variants: v, initial: "hidden", animate: "show" } as const);
 
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-3xl px-5 pb-24 pt-14 sm:pt-20">
       <AmbientEmbers reduce={!!reduce} />
-      {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} />}
+      {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} newRecord={recordPulse} />}
 
       {/* Language toggle */}
       <div className="relative z-10 flex justify-end">
@@ -110,6 +129,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
           {d.subtitle}
         </p>
+        <RotatingTagline items={d.taglines} reduce={!!reduce} />
       </motion.header>
 
       {/* Controls: filters + search */}
@@ -138,17 +158,22 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
               reduce={!!reduce}
               d={d}
               match={!!query && g.displayName.toLowerCase().includes(query)}
+              newRecord={rank === 0 && recordPulse}
             />
           );
         })}
       </motion.section>
 
-      {/* The rest — reorders with layout animation on filter change */}
-      <motion.ol className="relative z-10 mt-3 flex flex-col gap-2.5" layout={!reduce}>
+      {/* The rest — reorders with layout animation on filter change; 2 columns on large screens */}
+      <motion.ol
+        className="relative z-10 mt-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3"
+        layout={!reduce}
+      >
         <AnimatePresence mode="popLayout" initial={false}>
           {rest.map((g) => {
             const rank = entries.indexOf(g);
             const match = !!query && g.displayName.toLowerCase().includes(query);
+            const isOpen = expanded === g.displayName;
             return (
               <motion.li
                 key={g.displayName}
@@ -157,9 +182,8 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                 initial={reduce ? undefined : { opacity: 0, y: 14 }}
                 animate={reduce ? undefined : { opacity: query && !match ? 0.4 : 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0, y: -10 }}
-                whileHover={reduce ? undefined : { y: -3 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="rounded-xl border"
+                className="overflow-hidden rounded-xl border"
                 style={{
                   borderColor: match ? "var(--line-violet)" : "var(--line)",
                   background: match
@@ -167,23 +191,68 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                     : "linear-gradient(180deg, var(--surface), var(--ground-2))",
                 }}
               >
-                <Link
-                  href={guardianHref(g.displayName)}
-                  className="flex items-center gap-4 px-4 py-3.5"
-                  style={{ color: "inherit", textDecoration: "none" }}
-                >
-                  <span className="font-mono-num w-7 shrink-0 text-center text-sm" style={{ color: "var(--ash-dim)" }}>
-                    {rank + 1}
-                  </span>
-                  <GuardianDot />
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="truncate text-[15px]" style={{ color: "var(--warm-white)" }}>
-                      {g.displayName}
+                <div className="flex items-center">
+                  <Link
+                    href={guardianHref(g.displayName)}
+                    className="flex min-w-0 flex-1 items-center gap-4 px-4 py-3.5"
+                    style={{ color: "inherit", textDecoration: "none" }}
+                  >
+                    <span className="font-mono-num w-7 shrink-0 text-center text-sm" style={{ color: "var(--ash-dim)" }}>
+                      {rank + 1}
                     </span>
-                    <Badge brasas={g.brasas} d={d} />
-                  </span>
-                  <Brasas value={g.brasas} reduce={!!reduce} />
-                </Link>
+                    <GuardianDot />
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate text-[15px]" style={{ color: "var(--warm-white)" }}>
+                        {g.displayName}
+                      </span>
+                      <Badge brasas={g.brasas} d={d} />
+                    </span>
+                    <Brasas value={g.brasas} reduce={!!reduce} />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((prev) => (prev === g.displayName ? null : g.displayName))}
+                    aria-expanded={isOpen}
+                    aria-label={d.profile.roundsPlayed}
+                    className="shrink-0 px-3 py-3.5 transition-colors hover:text-[var(--warm-white)]"
+                    style={{ color: "var(--ash-dim)", background: "transparent", border: "none", cursor: "pointer" }}
+                  >
+                    <motion.span
+                      style={{ display: "inline-flex" }}
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.25, ease: EASE_OUT }}
+                    >
+                      <ChevronDown size={16} />
+                    </motion.span>
+                  </button>
+                </div>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={reduce ? undefined : { opacity: 0, height: 0 }}
+                      animate={reduce ? undefined : { opacity: 1, height: "auto" }}
+                      exit={reduce ? undefined : { opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25, ease: EASE_OUT }}
+                    >
+                      <div
+                        className="flex items-center justify-between border-t px-4 py-3"
+                        style={{ borderColor: "var(--line)" }}
+                      >
+                        <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+                          {typeof g.gamesPlayed === "number" ? `${g.gamesPlayed} ${d.rounds}` : d.profile.roundsPlayed}
+                        </span>
+                        <Link
+                          href={guardianHref(g.displayName)}
+                          className="inline-flex items-center gap-1 text-[13px] font-medium transition-colors hover:text-[var(--spark)]"
+                          style={{ color: "var(--amber)" }}
+                        >
+                          {d.profile.viewFull}
+                          <ArrowUpRight size={13} />
+                        </Link>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.li>
             );
           })}
@@ -249,7 +318,17 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
 /* --------------------------------------------------- Sticky leader + empty */
 
 // When the podium scrolls out of view, a slim bar keeps the current #1 in sight.
-function LeaderBar({ leader, d, reduce }: { leader: Guardian; d: Dict; reduce: boolean }) {
+function LeaderBar({
+  leader,
+  d,
+  reduce,
+  newRecord,
+}: {
+  leader: Guardian;
+  d: Dict;
+  reduce: boolean;
+  newRecord: boolean;
+}) {
   const { scrollY } = useScroll();
   const [shown, setShown] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => setShown(v > 360));
@@ -275,7 +354,10 @@ function LeaderBar({ leader, d, reduce }: { leader: Guardian; d: Dict; reduce: b
                 boxShadow: "0 12px 40px -20px rgba(0,0,0,0.8)",
               }}
             >
-              <Crown size={16} strokeWidth={1.7} style={{ color: "var(--gold)" }} />
+              <span style={{ position: "relative", display: "inline-flex" }}>
+                <Crown size={16} strokeWidth={1.7} style={{ color: "var(--gold)" }} />
+                <RecordBurst active={newRecord && !reduce} />
+              </span>
               <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
                 {d.leading}
               </span>
@@ -311,6 +393,62 @@ function EmptyState({ d }: { d: Dict }) {
         {d.emptyState}
       </p>
     </div>
+  );
+}
+
+// Rotates through a short set of one-line taglines beneath the subtitle. Frozen on the
+// first line when reduced-motion is requested — purely decorative motion, not information.
+function RotatingTagline({ items, reduce }: { items: string[]; reduce: boolean }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (reduce || items.length <= 1) return;
+    const id = setInterval(() => setI((p) => (p + 1) % items.length), 4200);
+    return () => clearInterval(id);
+  }, [items.length, reduce]);
+
+  if (reduce) {
+    return (
+      <div className="mt-3 font-mono-num text-[12px] tracking-wide" style={{ color: "var(--violet)" }}>
+        {items[0]}
+      </div>
+    );
+  }
+  return (
+    <div className="relative z-10 mt-3 flex h-5 items-center justify-center">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
+          className="font-mono-num text-[12px] tracking-wide"
+          style={{ color: "var(--violet)" }}
+        >
+          {items[i]}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// A few concentric rings burst outward from an icon-sized parent when a new record lands.
+// Purely additive visual feedback — the number itself already updates regardless.
+function RecordBurst({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="absolute inset-0 rounded-full"
+          style={{ border: "2px solid var(--spark)" }}
+          initial={{ scale: 0.6, opacity: 0.85 }}
+          animate={{ scale: 1.9, opacity: 0 }}
+          transition={{ duration: 1.1, delay: i * 0.18, ease: "easeOut" }}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -392,12 +530,14 @@ function PodiumCard({
   reduce,
   d,
   match,
+  newRecord,
 }: {
   guardian: Guardian;
   rank: number;
   reduce: boolean;
   d: Dict;
   match: boolean;
+  newRecord: boolean;
 }) {
   const isFirst = rank === 0;
   return (
@@ -418,16 +558,17 @@ function PodiumCard({
     >
       <Link
         href={guardianHref(guardian.displayName)}
-        className="flex w-full flex-col items-center"
+        className="group flex w-full flex-col items-center"
         style={{ color: "inherit", textDecoration: "none" }}
       >
       {isFirst && (
         <motion.div
           animate={reduce ? undefined : { y: [0, -3, 0] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          className="mb-1.5"
+          className="relative mb-1.5"
         >
           <Crown size={20} strokeWidth={1.6} style={{ color: "var(--gold)" }} />
+          <RecordBurst active={newRecord && !reduce} />
         </motion.div>
       )}
       <div className="relative">
@@ -452,6 +593,14 @@ function PodiumCard({
       <div className="mt-2">
         <Badge brasas={guardian.brasas} d={d} />
       </div>
+      {typeof guardian.gamesPlayed === "number" && (
+        <span
+          className="max-h-0 overflow-hidden text-[11px] opacity-0 transition-all duration-300 group-hover:mt-1.5 group-hover:max-h-4 group-hover:opacity-100"
+          style={{ color: "var(--ash-dim)" }}
+        >
+          {guardian.gamesPlayed} {d.rounds}
+        </span>
+      )}
       </Link>
     </motion.div>
   );
@@ -535,24 +684,10 @@ function Badge({ brasas, d }: { brasas: number; d: Dict }) {
 }
 
 function Brasas({ value, reduce, accent = false }: { value: number; reduce: boolean; accent?: boolean }) {
-  const mv = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    if (reduce) {
-      setDisplay(value);
-      return;
-    }
-    const controls = animate(mv, value, {
-      duration: 1.1,
-      ease: EASE_OUT,
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [value, reduce, mv]);
   return (
     <span className="flex items-center gap-1.5" style={{ color: accent ? "var(--spark)" : "var(--amber)" }}>
       <Flame size={accent ? 16 : 14} strokeWidth={1.8} />
-      <span className="font-mono-num text-[14px] font-medium">{display.toLocaleString()}</span>
+      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[14px] font-medium" />
     </span>
   );
 }

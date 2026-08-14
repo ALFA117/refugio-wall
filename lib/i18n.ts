@@ -27,6 +27,7 @@ export type Dict = {
   rounds: string;
   leading: string;
   emptyState: string;
+  taglines: string[];
   profile: {
     rank: string;
     of: string;
@@ -36,6 +37,7 @@ export type Dict = {
     back: string;
     notFound: string;
     notFoundBody: string;
+    viewFull: string;
   };
 };
 
@@ -70,6 +72,12 @@ const en: Dict = {
   rounds: "rounds",
   leading: "Leading",
   emptyState: "The fire is waiting for its first guardians.",
+  taglines: [
+    "The fire remembers who showed up.",
+    "No host. No schedule. Just whoever's here.",
+    "One log at a time, together.",
+    "Presence is the only requirement.",
+  ],
   profile: {
     rank: "Rank",
     of: "of",
@@ -79,6 +87,7 @@ const en: Dict = {
     back: "Back to the Wall",
     notFound: "No such guardian",
     notFoundBody: "This name isn't on the Wall yet.",
+    viewFull: "View full profile",
   },
 };
 
@@ -113,6 +122,12 @@ const es: Dict = {
   rounds: "rondas",
   leading: "A la cabeza",
   emptyState: "El fuego espera a sus primeros guardianes.",
+  taglines: [
+    "El fuego recuerda quién llegó.",
+    "Sin host. Sin horario. Solo quien está.",
+    "Un tronco a la vez, juntos.",
+    "La presencia es el único requisito.",
+  ],
   profile: {
     rank: "Puesto",
     of: "de",
@@ -122,6 +137,7 @@ const es: Dict = {
     back: "Volver al muro",
     notFound: "Guardián no encontrado",
     notFoundBody: "Este nombre aún no está en el muro.",
+    viewFull: "Ver perfil completo",
   },
 };
 

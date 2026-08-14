@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { motion, useMotionValue, animate, useReducedMotion } from "framer-motion";
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Flame, ArrowLeft, Share2, Crown, Languages, Check } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { useLang } from "./useLang";
+import { TickerNumber } from "./TickerNumber";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
@@ -92,7 +93,11 @@ export function GuardianProfile({
 
           <div className="mt-8 flex items-end gap-2" style={{ color: "var(--spark)" }}>
             <Flame size={30} strokeWidth={1.8} className="mb-1.5" />
-            <BigCount value={guardian.brasas} reduce={!!reduce} />
+            <TickerNumber
+              value={guardian.brasas}
+              reduce={!!reduce}
+              className="font-mono-num text-5xl font-semibold leading-none sm:text-6xl"
+            />
             <span className="mb-2 text-[15px]" style={{ color: "var(--ash)" }}>
               {d.brasas}
             </span>
@@ -161,22 +166,6 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
       {copied ? <Check size={15} style={{ color: "var(--gold)" }} /> : <Share2 size={15} style={{ color: "var(--amber)" }} />}
       {copied ? d.profile.copied : d.profile.share}
     </button>
-  );
-}
-
-function BigCount({ value, reduce }: { value: number; reduce: boolean }) {
-  const mv = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    if (reduce) {
-      setDisplay(value);
-      return;
-    }
-    const controls = animate(mv, value, { duration: 1.2, ease: EASE_OUT, onUpdate: (v) => setDisplay(Math.round(v)) });
-    return () => controls.stop();
-  }, [value, reduce, mv]);
-  return (
-    <span className="font-mono-num text-5xl font-semibold leading-none sm:text-6xl">{display.toLocaleString()}</span>
   );
 }
 
