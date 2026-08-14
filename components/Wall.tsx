@@ -93,15 +93,32 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const anim = (v: Variants) =>
     reduce ? {} : ({ variants: v, initial: "hidden", animate: "show" } as const);
 
+  // Easter egg: 5 rapid taps on the language toggle (within 2s) sets off a burst of embers
+  // across the screen. A hidden little "wink" rather than a permanent, always-visible control.
+  const langClicks = useRef<number[]>([]);
+  const [easterEgg, setEasterEgg] = useState(false);
+  function handleLangClick() {
+    setLang(lang === "en" ? "es" : "en");
+    if (reduce) return;
+    const now = Date.now();
+    langClicks.current = [...langClicks.current.filter((t) => now - t < 2000), now];
+    if (langClicks.current.length >= 5) {
+      langClicks.current = [];
+      setEasterEgg(true);
+      setTimeout(() => setEasterEgg(false), 1500);
+    }
+  }
+
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-3xl px-5 pb-24 pt-14 sm:pt-20">
       <AmbientEmbers reduce={!!reduce} />
       {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} newRecord={recordPulse} />}
+      <EasterEggBurst active={easterEgg} />
 
       {/* Language toggle */}
       <div className="relative z-10 flex justify-end">
         <button
-          onClick={() => setLang(lang === "en" ? "es" : "en")}
+          onClick={handleLangClick}
           className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
           style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
           aria-label="Switch language"
@@ -449,6 +466,42 @@ function RecordBurst({ active }: { active: boolean }) {
         />
       ))}
     </span>
+  );
+}
+
+// Hidden easter egg payoff: a burst of embers flying outward from the center of the screen.
+function EasterEggBurst({ active }: { active: boolean }) {
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {Array.from({ length: 14 }).map((_, i) => {
+            const angle = (i / 14) * Math.PI * 2;
+            const dist = 140 + (i % 3) * 40;
+            return (
+              <motion.span
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: 8,
+                  height: 8,
+                  background: i % 2 === 0 ? "var(--spark)" : "var(--ember)",
+                  boxShadow: "0 0 12px rgba(255,150,60,0.8)",
+                }}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, opacity: 0, scale: 0.3 }}
+                transition={{ duration: 1.1, ease: "easeOut" }}
+              />
+            );
+          })}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

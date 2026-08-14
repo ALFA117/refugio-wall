@@ -13,11 +13,17 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+// Canonical host — this project also answers on refugio-azure.vercel.app and a few other
+// claimed aliases (all via `vercel domains add`, so they follow every deploy); this one is
+// the clearest/most memorable and is what metadata, canonical links and the sitemap point to.
+const CANONICAL_URL = "https://wall-of-guardians.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://refugio-azure.vercel.app"),
+  metadataBase: new URL(CANONICAL_URL),
   title: "Wall of Guardians · Refugio",
   description:
     "The public leaderboard for Refugio — a Decentraland campfire that only burns when people show up. Embers earned keeping the fire alive.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Wall of Guardians · Refugio",
     description:

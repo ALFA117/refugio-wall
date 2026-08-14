@@ -9,6 +9,7 @@ export async function generateMetadata({ params }: { params: { name: string } })
   return {
     title: `${name} · Wall of Guardians`,
     description: `${name} on the Refugio Wall of Guardians — embers earned keeping the fire alive.`,
+    alternates: { canonical: `/guardians/${encodeURIComponent(name)}` },
   };
 }
 
