@@ -13,7 +13,7 @@ const FEED_GAIN = 12;
 
 type Difficulty = "easy" | "normal" | "hard";
 type Wood = { id: number; slot: number };
-type Phase = "start" | "playing";
+type Phase = "start" | "playing" | "gameover";
 
 const DIFFICULTY: Record<Difficulty, { ttl: number; spawnBase: number; decay: number; miss: number }> = {
   easy: { ttl: 2600, spawnBase: 3000, decay: 0.7, miss: 6 },
@@ -70,6 +70,17 @@ export function Demo() {
     return () => clearInterval(id);
   }, [phase, guardians, cfg.decay]);
 
+  // The fire went out — a clear end to the loop instead of an open-ended sandbox.
+  useEffect(() => {
+    if (phase === "playing" && health <= 0) {
+      if (woodTimer.current) clearTimeout(woodTimer.current);
+      setWood(null);
+      setPhase("gameover");
+    }
+  }, [phase, health]);
+
+  const [milestone, setMilestone] = useState(0); // bumps to retrigger the celebration burst
+
   function resolveWood(id: number, fed: boolean) {
     setWood((current) => (current && current.id === id ? null : current));
     if (woodTimer.current) clearTimeout(woodTimer.current);
@@ -79,6 +90,7 @@ export function Demo() {
     setStreak((s) => {
       const next = fed ? s + 1 : 0;
       setBest((b) => Math.max(b, next));
+      if (next > 0 && next % 5 === 0) setMilestone((m) => m + 1);
       return next;
     });
   }
@@ -93,6 +105,7 @@ export function Demo() {
   }
 
   const healthColor = health >= 60 ? "#4fbf6a" : health >= 30 ? "var(--amber)" : "#ff5a4a";
+  const lowHealth = phase === "playing" && health > 0 && health < 25;
 
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-lg px-5 pb-16 pt-8">
@@ -123,7 +136,7 @@ export function Demo() {
           at the transition (rAF pauses in hidden tabs) could get stuck showing stale content
           indefinitely. Enter and exit run independently instead. */}
       <AnimatePresence>
-        {phase === "start" ? (
+        {phase === "start" && (
           <StartScreen
             key="start"
             d={d}
@@ -132,7 +145,11 @@ export function Demo() {
             setDifficulty={setDifficulty}
             onPlay={startGame}
           />
-        ) : (
+        )}
+        {phase === "gameover" && (
+          <GameOverScreen key="gameover" d={d} reduce={!!reduce} best={best} onPlay={startGame} />
+        )}
+        {phase === "playing" && (
           <motion.div
             key="playing"
             initial={reduce ? undefined : { opacity: 0, scale: 0.97 }}
@@ -147,15 +164,23 @@ export function Demo() {
               <Chip icon={<Trophy size={13} />} label={d.best} value={`${best}`} color="var(--spark)" />
             </div>
 
-            {/* The fire card */}
-            <div
+            {/* The fire card — border pulses red when health is critically low */}
+            <motion.div
               className="relative z-10 mt-4 overflow-hidden rounded-2xl border"
+              animate={
+                lowHealth && !reduce
+                  ? { borderColor: ["#ff5a4a", "var(--line-strong)", "#ff5a4a"] }
+                  : { borderColor: "var(--line-strong)" }
+              }
+              transition={lowHealth ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
               style={{
-                borderColor: "var(--line-strong)",
                 background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #060410 70%)",
-                boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
+                boxShadow: lowHealth
+                  ? "0 0 60px -10px rgba(255,80,60,0.45)"
+                  : "0 30px 90px -40px rgba(255,122,45,0.4)",
               }}
             >
+              <MilestoneBurst trigger={milestone} reduce={!!reduce} />
               <div className="relative">
                 <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
 
@@ -276,7 +301,7 @@ export function Demo() {
                   {d.feedHint}
                 </p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -404,6 +429,103 @@ function StartScreen({
         {d.play}
       </motion.button>
     </motion.div>
+  );
+}
+
+/* -------------------------------------------------------------- Game over */
+
+// The fire went out — gives the loop a clear end and a reason to try again, instead of
+// leaving health sitting at 0 forever with no feedback.
+function GameOverScreen({
+  d,
+  reduce,
+  best,
+  onPlay,
+}: {
+  d: Dict["demo"];
+  reduce: boolean;
+  best: number;
+  onPlay: () => void;
+}) {
+  return (
+    <motion.div
+      key="gameover"
+      initial={reduce ? undefined : { opacity: 0, y: 16 }}
+      animate={reduce ? undefined : { opacity: 1, y: 0 }}
+      exit={reduce ? undefined : { opacity: 0, y: -16 }}
+      transition={{ duration: 0.4, ease: EASE_OUT }}
+      className="relative z-10 mt-10 flex flex-col items-center text-center"
+    >
+      <motion.div
+        initial={reduce ? undefined : { scale: 0.6, opacity: 0 }}
+        animate={reduce ? undefined : { scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+        className="h-14 w-14 rounded-full"
+        style={{ background: "radial-gradient(circle at 35% 30%, #6b3f1e, #1a0f10 75%)", border: "1px solid var(--line)" }}
+      />
+      <h1 className="font-serif-display mt-5 max-w-[16ch] text-2xl font-semibold tracking-tight sm:text-3xl">
+        {d.gameOverTitle}
+      </h1>
+      <p className="mt-2 text-[14px]" style={{ color: "var(--ash)" }}>
+        {d.gameOverBody}
+      </p>
+      <div className="mt-5 flex items-center gap-2 rounded-full border px-4 py-2" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+        <Trophy size={14} style={{ color: "var(--spark)" }} />
+        <span className="font-mono-num text-[13px]" style={{ color: "var(--ash-dim)" }}>
+          {d.best}
+        </span>
+        <span className="font-mono-num text-[15px] font-semibold" style={{ color: "var(--spark)" }}>
+          {best}
+        </span>
+      </div>
+      <motion.button
+        type="button"
+        onClick={onPlay}
+        whileHover={reduce ? undefined : { scale: 1.03 }}
+        whileTap={reduce ? undefined : { scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        className="mt-7 inline-flex min-h-14 w-full max-w-xs items-center justify-center gap-2 rounded-full text-[16px] font-semibold"
+        style={{
+          background: "linear-gradient(90deg, var(--ember), var(--spark))",
+          color: "#1a0d04",
+          boxShadow: "0 16px 40px -14px rgba(255,150,60,0.8)",
+        }}
+      >
+        <RotateCcw size={17} />
+        {d.playAgain}
+      </motion.button>
+    </motion.div>
+  );
+}
+
+/* ---------------------------------------------------------- Milestone burst */
+
+// Every 5th consecutive feed triggers a small celebration — spark burst from the card center.
+// `trigger` is a counter that increments on each milestone; keying the burst on it re-fires it.
+function MilestoneBurst({ trigger, reduce }: { trigger: number; reduce: boolean }) {
+  if (trigger === 0) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+      <AnimatePresence>
+        <motion.div key={trigger} className="absolute inset-0 flex items-center justify-center" exit={{ opacity: 0 }}>
+          {!reduce &&
+            Array.from({ length: 12 }).map((_, i) => {
+              const angle = (i / 12) * Math.PI * 2;
+              const dist = 70 + (i % 3) * 24;
+              return (
+                <motion.span
+                  key={i}
+                  className="absolute rounded-full"
+                  style={{ width: 6, height: 6, background: "var(--spark)", boxShadow: "0 0 10px rgba(255,214,107,0.9)" }}
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                  animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, opacity: 0, scale: 0.3 }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                />
+              );
+            })}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 

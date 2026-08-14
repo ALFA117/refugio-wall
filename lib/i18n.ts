@@ -59,6 +59,9 @@ export type Dict = {
     modes: { easy: string; normal: string; hard: string };
     streak: string;
     best: string;
+    gameOverTitle: string;
+    gameOverBody: string;
+    playAgain: string;
   };
 };
 
@@ -131,6 +134,9 @@ const en: Dict = {
     modes: { easy: "Easy", normal: "Normal", hard: "Hard" },
     streak: "Streak",
     best: "Best",
+    gameOverTitle: "The fire went out.",
+    gameOverBody: "Nobody fed it in time — but a fire always finds someone willing to try again.",
+    playAgain: "Play again",
   },
 };
 
@@ -203,6 +209,9 @@ const es: Dict = {
     modes: { easy: "Fácil", normal: "Normal", hard: "Difícil" },
     streak: "Racha",
     best: "Mejor",
+    gameOverTitle: "El fuego se apagó.",
+    gameOverBody: "Nadie lo alimentó a tiempo — pero un fuego siempre encuentra a alguien dispuesto a intentarlo de nuevo.",
+    playAgain: "Jugar de nuevo",
   },
 };
 
