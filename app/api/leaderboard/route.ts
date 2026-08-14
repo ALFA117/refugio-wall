@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLeaderboard, type Guardian, type Timeframe } from "@/lib/leaderboard";
+import { getLeaderboard, kvSet, isKvConfigured, type Guardian, type Timeframe } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
@@ -14,18 +14,15 @@ export async function GET(req: Request) {
 }
 
 // POST — ingest a snapshot from the Decentraland Multiplayer Server (via signedFetch on
-// round close). Guarded by a shared secret so only our server can write. Writes to Supabase
+// round close). Guarded by a shared secret so only our server can write. Stores in Vercel KV
 // when configured; otherwise responds 501 so the caller knows ingest isn't wired yet.
 export async function POST(req: Request) {
   const secret = process.env.REFUGIO_INGEST_SECRET;
   if (!secret || req.headers.get("x-refugio-secret") !== secret) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
-  if (!url || !key) {
-    return NextResponse.json({ error: "supabase not configured" }, { status: 501 });
+  if (!isKvConfigured()) {
+    return NextResponse.json({ error: "KV not configured" }, { status: 501 });
   }
 
   let entries: Guardian[];
@@ -36,24 +33,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  const rows = entries
+  const clean = entries
     .filter((e) => e && typeof e.displayName === "string" && typeof e.brasas === "number")
     .slice(0, 50)
-    .map((e) => ({ display_name: e.displayName, brasas: e.brasas, updated_at: new Date().toISOString() }));
+    .map((e) => ({ displayName: e.displayName, brasas: e.brasas }));
 
-  const res = await fetch(`${url}/rest/v1/leaderboard`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates",
-    },
-    body: JSON.stringify(rows),
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: "upstream write failed" }, { status: 502 });
-  }
-  return NextResponse.json({ ok: true, written: rows.length });
+  const ok = await kvSet(clean);
+  if (!ok) return NextResponse.json({ error: "kv write failed" }, { status: 502 });
+  return NextResponse.json({ ok: true, written: clean.length });
 }

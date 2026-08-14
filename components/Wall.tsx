@@ -51,7 +51,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   // the Wall stays live without a reload. The layout animation handles any reordering.
   const [frames, setFrames] = useState(bundle.frames);
   useEffect(() => {
-    if (bundle.source !== "supabase") return;
+    if (bundle.source !== "live") return;
     const id = setInterval(async () => {
       try {
         const res = await fetch(`/api/leaderboard?timeframe=${tf}`, { cache: "no-store" });
@@ -100,7 +100,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
       >
-        <div className="eyebrow">{bundle.source === "supabase" ? d.eyebrowLive : d.eyebrowPreview}</div>
+        <div className="eyebrow">{bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}</div>
         <h1
           className="font-serif-display mx-auto mt-4 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
           style={{ textWrap: "balance" }}
@@ -220,7 +220,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         transition={{ duration: 0.6 }}
       >
         <p className="max-w-sm text-[13px]" style={{ color: "var(--ash-dim)" }}>
-          {bundle.source === "supabase" ? d.footerLive : d.footerPreview}
+          {bundle.source === "live" ? d.footerLive : d.footerPreview}
         </p>
         <div className="flex flex-wrap justify-center gap-2.5">
           <FooterLink href="#" label={d.cta.scene} />

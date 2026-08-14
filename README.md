@@ -7,14 +7,14 @@ Built with **Next.js (App Router)**, **Framer Motion**, and **Tailwind**, in the
 ## How data flows
 
 ```
-Decentraland Multiplayer Server  ──signedFetch(POST)──▶  /api/leaderboard  ──▶  Supabase
+Decentraland Multiplayer Server  ──signedFetch(POST)──▶  /api/leaderboard  ──▶  Vercel KV
                                                                                     │
                                           Web page  ◀──── getLeaderboard() ◀────────┘
 ```
 
-When a round closes, the authoritative server can `signedFetch` a snapshot of the top guardians to `POST /api/leaderboard` (guarded by a shared secret). The route upserts into Supabase; the page reads it back.
+When a round closes, the authoritative server `signedFetch`es a snapshot of the top guardians to `POST /api/leaderboard` (guarded by a shared secret). The route stores it in **Vercel KV** (Upstash Redis) — a single JSON value, no SQL, no schema; the page reads it back.
 
-**Until Supabase is wired, the site serves representative sample data** so it deploys and looks right immediately.
+**Until KV is wired, the site serves representative sample data** so it deploys and looks right immediately.
 
 ## Run locally
 
@@ -25,9 +25,9 @@ npm run dev
 
 ## Go live (optional)
 
-1. Create a Supabase project and a `leaderboard` table: `display_name text`, `brasas int`, `updated_at timestamptz`.
-2. Set the env vars from [`.env.example`](.env.example) in the Vercel project.
-3. Have the Refugio server POST snapshots to `/api/leaderboard` with the `x-refugio-secret` header on round close.
+1. In the Vercel dashboard: **Storage → Create Database → KV (Upstash for Redis)**, connect it to the `refugio` project. Vercel adds `KV_REST_API_URL` / `KV_REST_API_TOKEN` automatically.
+2. Add one env var yourself: `REFUGIO_INGEST_SECRET` (any long random string).
+3. In the Refugio scene deploy, set EnvVars `COMPANION_URL=https://<site>/api/leaderboard` and `COMPANION_SECRET` (same value as `REFUGIO_INGEST_SECRET`). The server pushes on every round close.
 
 ## Deploy
 
