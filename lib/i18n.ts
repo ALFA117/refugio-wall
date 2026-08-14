@@ -25,6 +25,8 @@ export type Dict = {
   langLabel: string;
   brasas: string;
   rounds: string;
+  leading: string;
+  emptyState: string;
   profile: {
     rank: string;
     of: string;
@@ -66,6 +68,8 @@ const en: Dict = {
   langLabel: "ES",
   brasas: "embers",
   rounds: "rounds",
+  leading: "Leading",
+  emptyState: "The fire is waiting for its first guardians.",
   profile: {
     rank: "Rank",
     of: "of",
@@ -107,6 +111,8 @@ const es: Dict = {
   langLabel: "EN",
   brasas: "brasas",
   rounds: "rondas",
+  leading: "A la cabeza",
+  emptyState: "El fuego espera a sus primeros guardianes.",
   profile: {
     rank: "Puesto",
     of: "de",

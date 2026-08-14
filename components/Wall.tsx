@@ -5,6 +5,7 @@ import {
   motion,
   AnimatePresence,
   useMotionValue,
+  useMotionValueEvent,
   animate,
   useReducedMotion,
   useScroll,
@@ -67,6 +68,8 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean) as Guardian[];
   const query = q.trim().toLowerCase();
   const anyMatch = query ? entries.some((e) => e.displayName.toLowerCase().includes(query)) : true;
+  const leader = entries[0] ?? null;
+  const empty = entries.length === 0;
 
   const anim = (v: Variants) =>
     reduce ? {} : ({ variants: v, initial: "hidden", animate: "show" } as const);
@@ -74,6 +77,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-3xl px-5 pb-24 pt-14 sm:pt-20">
       <AmbientEmbers reduce={!!reduce} />
+      {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} />}
 
       {/* Language toggle */}
       <div className="relative z-10 flex justify-end">
@@ -114,6 +118,10 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         <SearchBox d={d} q={q} setQ={setQ} />
       </div>
 
+      {empty ? (
+        <EmptyState d={d} />
+      ) : (
+        <>
       {/* Podium */}
       <motion.section
         key={`podium-${tf}`}
@@ -209,6 +217,8 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           ))}
         </tbody>
       </table>
+        </>
+      )}
 
       <HowItWorks d={d} reduce={!!reduce} />
 
@@ -233,6 +243,74 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </div>
       </motion.footer>
     </main>
+  );
+}
+
+/* --------------------------------------------------- Sticky leader + empty */
+
+// When the podium scrolls out of view, a slim bar keeps the current #1 in sight.
+function LeaderBar({ leader, d, reduce }: { leader: Guardian; d: Dict; reduce: boolean }) {
+  const { scrollY } = useScroll();
+  const [shown, setShown] = useState(false);
+  useMotionValueEvent(scrollY, "change", (v) => setShown(v > 360));
+  return (
+    <AnimatePresence>
+      {shown && (
+        <motion.div
+          initial={reduce ? { opacity: 0 } : { y: -60, opacity: 0 }}
+          animate={reduce ? { opacity: 1 } : { y: 0, opacity: 1 }}
+          exit={reduce ? { opacity: 0 } : { y: -60, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 30 }}
+          className="fixed inset-x-0 top-0 z-40"
+        >
+          <div className="mx-auto max-w-3xl px-5 pt-3">
+            <Link
+              href={guardianHref(leader.displayName)}
+              className="flex items-center gap-3 rounded-full border px-4 py-2.5 backdrop-blur"
+              style={{
+                borderColor: "var(--line-violet)",
+                background: "linear-gradient(90deg, rgba(25,17,40,0.92), rgba(20,14,32,0.92))",
+                color: "inherit",
+                textDecoration: "none",
+                boxShadow: "0 12px 40px -20px rgba(0,0,0,0.8)",
+              }}
+            >
+              <Crown size={16} strokeWidth={1.7} style={{ color: "var(--gold)" }} />
+              <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+                {d.leading}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: "var(--warm-white)" }}>
+                {leader.displayName}
+              </span>
+              <span className="flex items-center gap-1.5" style={{ color: "var(--spark)" }}>
+                <Flame size={14} strokeWidth={1.8} />
+                <span className="font-mono-num text-[13px] font-medium">{leader.brasas.toLocaleString()}</span>
+              </span>
+            </Link>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Shown when there are no guardians yet (e.g. KV is live but the scene hasn't pushed a round).
+function EmptyState({ d }: { d: Dict }) {
+  return (
+    <div className="relative z-10 mt-20 flex flex-col items-center text-center">
+      <div
+        className="rounded-full"
+        style={{
+          width: 56,
+          height: 56,
+          background: "radial-gradient(circle at 35% 30%, rgba(255,214,107,0.5), rgba(255,122,45,0.22) 72%)",
+          border: "1px solid var(--line)",
+        }}
+      />
+      <p className="mt-5 max-w-xs text-[15px]" style={{ color: "var(--ash)" }}>
+        {d.emptyState}
+      </p>
+    </div>
   );
 }
 
