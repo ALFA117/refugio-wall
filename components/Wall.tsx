@@ -385,7 +385,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           {bundle.source === "live" ? d.footerLive : d.footerPreview}
         </p>
         <div className="flex flex-wrap justify-center gap-2.5">
-          <FooterLink href="#" label={d.cta.scene} />
+          <FooterLink label={d.cta.sceneSoon} disabled />
           <FooterLink href="/demo" label={d.cta.demo} />
           <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
           <WallShareButton d={d} />
@@ -811,7 +811,30 @@ function Brasas({ value, reduce, accent = false }: { value: number; reduce: bool
   );
 }
 
-function FooterLink({ href, label, external = false }: { href: string; label: string; external?: boolean }) {
+function FooterLink({
+  href,
+  label,
+  external = false,
+  disabled = false,
+}: {
+  href?: string;
+  label: string;
+  external?: boolean;
+  disabled?: boolean;
+}) {
+  // A disabled entry is a real, honest state (e.g. the DCL scene isn't published yet) rather
+  // than a live-looking link pointing at "#" that does nothing when clicked — an <a> without
+  // an href is also naturally out of the tab order, so it doesn't masquerade as interactive.
+  if (disabled) {
+    return (
+      <span
+        className="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-lg border border-dashed px-4 font-mono-num text-[13px]"
+        style={{ borderColor: "var(--line-violet)", color: "var(--ash-dim)" }}
+      >
+        {label}
+      </span>
+    );
+  }
   return (
     <a
       href={href}

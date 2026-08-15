@@ -18,7 +18,7 @@ export type Dict = {
   footerLive: string;
   footerPreview: string;
   reconnecting: string;
-  cta: { scene: string; demo: string; github: string; share: string; copied: string };
+  cta: { scene: string; sceneSoon: string; demo: string; github: string; share: string; copied: string };
   howTitle: string;
   howEyebrow: string;
   systems: System[];
@@ -85,7 +85,7 @@ const en: Dict = {
   footerLive: "Updates as rounds complete in the scene.",
   footerPreview: "Preview data — goes live once the scene starts pushing rounds.",
   reconnecting: "reconnecting…",
-  cta: { scene: "Enter the scene", demo: "Try it in your browser", github: "GitHub", share: "Share", copied: "Link copied" },
+  cta: { scene: "Enter the scene", sceneSoon: "Scene — publishing soon", demo: "Try it in your browser", github: "GitHub", share: "Share", copied: "Link copied" },
   howTitle: "How the fire works",
   howEyebrow: "The scene",
   systems: [
@@ -166,7 +166,7 @@ const es: Dict = {
   footerLive: "Se actualiza cuando terminan rondas en la escena.",
   footerPreview: "Datos de muestra — se activa cuando la escena empiece a enviar rondas.",
   reconnecting: "reconectando…",
-  cta: { scene: "Entrar a la escena", demo: "Pruébalo en tu navegador", github: "GitHub", share: "Compartir", copied: "Enlace copiado" },
+  cta: { scene: "Entrar a la escena", sceneSoon: "Escena — próximamente", demo: "Pruébalo en tu navegador", github: "GitHub", share: "Compartir", copied: "Enlace copiado" },
   howTitle: "Cómo funciona el fuego",
   howEyebrow: "La escena",
   systems: [
