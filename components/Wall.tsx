@@ -166,7 +166,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
             animate={
               reduce
                 ? undefined
-                : { boxShadow: ["0 14px 34px -14px rgba(255,150,60,0.7)", "0 14px 46px -6px rgba(255,180,80,0.95)", "0 14px 34px -14px rgba(255,150,60,0.7)"] }
+                : { boxShadow: ["0 10px 26px -14px rgba(255,150,60,0.65)", "0 10px 34px -10px rgba(255,180,80,0.85)", "0 10px 26px -14px rgba(255,150,60,0.65)"] }
             }
             transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", stiffness: 400, damping: 22 } }}
             className="flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-center"
@@ -178,9 +178,11 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </Link>
       </motion.div>
 
-      {/* Header */}
+      {/* Header — mt-10 gives the CTA room to breathe instead of the eyebrow crowding right
+          under its glow; the CTA is meant to be the loud, attention-grabbing element, the
+          header the calmer one right after, not two things fighting in the same beat. */}
       <motion.header
-        className="relative text-center"
+        className="relative mt-10 text-center"
         initial={reduce ? undefined : { opacity: 0, y: 18 }}
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
