@@ -34,7 +34,7 @@ export function GuardianProfile({
       <div className="relative z-10 flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
+          className="inline-flex min-h-11 items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
           style={{ color: "var(--ash)" }}
         >
           <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
@@ -42,7 +42,7 @@ export function GuardianProfile({
         </Link>
         <button
           onClick={() => setLang(lang === "en" ? "es" : "en")}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
           style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
           aria-label="Switch language"
         >
@@ -160,7 +160,7 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
   return (
     <button
       onClick={share}
-      className="mt-10 inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
+      className="mt-10 inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
       {copied ? <Check size={15} style={{ color: "var(--gold)" }} /> : <Share2 size={15} style={{ color: "var(--amber)" }} />}
