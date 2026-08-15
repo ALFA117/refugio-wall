@@ -62,6 +62,9 @@ export type Dict = {
     gameOverTitle: string;
     gameOverBody: string;
     playAgain: string;
+    share: string;
+    copied: string;
+    shareText: string;
   };
 };
 
@@ -137,6 +140,9 @@ const en: Dict = {
     gameOverTitle: "The fire went out.",
     gameOverBody: "Nobody fed it in time — but a fire always finds someone willing to try again.",
     playAgain: "Play again",
+    share: "Share",
+    copied: "Link copied",
+    shareText: "I kept Refugio's fire alive for a streak of",
   },
 };
 
@@ -212,6 +218,9 @@ const es: Dict = {
     gameOverTitle: "El fuego se apagó.",
     gameOverBody: "Nadie lo alimentó a tiempo — pero un fuego siempre encuentra a alguien dispuesto a intentarlo de nuevo.",
     playAgain: "Jugar de nuevo",
+    share: "Compartir",
+    copied: "Enlace copiado",
+    shareText: "Mantuve el fuego de Refugio vivo con una racha de",
   },
 };
 

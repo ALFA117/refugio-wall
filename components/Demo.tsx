@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Flame, Languages, Play, Trophy, RotateCcw } from "lucide-react";
+import { ArrowLeft, Flame, Languages, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
@@ -494,7 +494,42 @@ function GameOverScreen({
         <RotateCcw size={17} />
         {d.playAgain}
       </motion.button>
+      <ShareBestButton d={d} best={best} />
     </motion.div>
+  );
+}
+
+function ShareBestButton({ d, best }: { d: Dict["demo"]; best: number }) {
+  const [copied, setCopied] = useState(false);
+  async function share() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const text = `${d.shareText} ${best}. ${d.title} ${d.titleEm}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: `${d.title} ${d.titleEm}`, text, url });
+        return;
+      } catch {
+        /* fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={share}
+      className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-[13.5px] font-medium transition-colors hover:border-[var(--amber)]"
+      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+    >
+      {copied ? <Check size={14} style={{ color: "var(--gold)" }} /> : <Share2 size={14} style={{ color: "var(--amber)" }} />}
+      {copied ? d.copied : d.share}
+    </button>
   );
 }
 
