@@ -12,7 +12,7 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Play, Share2, Check } from "lucide-react";
+import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Share2, Check } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { useLang } from "./useLang";
@@ -151,68 +151,81 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </button>
       </div>
 
-      {/* Header — identity comes before the ask. A visitor should learn what this page IS
-          (Wall of Guardians) before being invited to go DO something (try the demo); leading
-          with the CTA put the action ahead of the introduction, which is what read as "off." */}
-      <motion.header
-        className="relative mt-7 text-center"
+      {/* Hero card — identity + CTA live inside one framed, glass-morphism surface instead of
+          floating directly on the page background. HeroGlow gives it real depth (a felt light
+          source, not just a flat panel) — this is the structural fix for "looks flat/plain,"
+          not another spacing tweak. */}
+      <motion.section
+        className="relative mt-8 overflow-hidden rounded-[28px] border px-6 py-10 text-center sm:px-12 sm:py-14"
         initial={reduce ? undefined : { opacity: 0, y: 18 }}
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
+        style={{
+          borderColor: "var(--line-violet)",
+          background: "linear-gradient(180deg, rgba(26,18,40,0.55), rgba(13,9,20,0.7))",
+          boxShadow: "0 50px 130px -60px rgba(139,124,255,0.4), inset 0 1px 0 rgba(255,255,255,0.045)",
+        }}
       >
-        <div
-          className="eyebrow inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5"
-          style={{ borderColor: "var(--line-violet)", background: "rgba(139,124,255,0.06)" }}
-        >
-          {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
-          {staleConnection && (
-            <span
-              className="font-mono-num normal-case tracking-normal"
-              style={{ color: "var(--ash-dim)" }}
-              role="status"
-            >
-              · {d.reconnecting}
-            </span>
-          )}
-        </div>
-        <h1
-          className="font-serif-display mx-auto mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
-          style={{ textWrap: "balance" }}
-        >
-          {d.titlePre}{" "}
-          <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
-          {d.subtitle}
-        </p>
-        <RotatingTagline items={d.taglines} reduce={!!reduce} />
-      </motion.header>
+        <HeroGlow reduce={!!reduce} />
 
-      {/* Play CTA — now the natural next beat after the introduction, not competing with it. */}
-      <motion.div
-        initial={reduce ? undefined : { opacity: 0, y: -6 }}
-        animate={reduce ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE_OUT, delay: reduce ? 0 : 0.15 }}
-        className="relative z-10 mx-auto mt-7 max-w-sm"
-      >
-        <Link href="/demo" className="block">
-          <motion.div
-            whileHover={reduce ? undefined : { scale: 1.015 }}
-            whileTap={reduce ? undefined : { scale: 0.985 }}
-            animate={
-              reduce
-                ? undefined
-                : { boxShadow: ["0 10px 26px -14px rgba(255,150,60,0.65)", "0 10px 34px -10px rgba(255,180,80,0.85)", "0 10px 26px -14px rgba(255,150,60,0.65)"] }
-            }
-            transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", stiffness: 400, damping: 22 } }}
-            className="flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-center"
-            style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
+        {/* Header — identity comes before the ask. A visitor should learn what this page IS
+            (Wall of Guardians) before being invited to go DO something (try the demo); leading
+            with the CTA put the action ahead of the introduction, which is what read as "off." */}
+        <header className="relative z-10">
+          <div
+            className="eyebrow inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5"
+            style={{ borderColor: "var(--line-violet)", background: "rgba(139,124,255,0.08)" }}
           >
-            <Play size={18} fill="#1a0d04" />
-            <span className="text-[15px] font-bold sm:text-[16px]">{d.cta.demo}</span>
-          </motion.div>
-        </Link>
-      </motion.div>
+            {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
+            {staleConnection && (
+              <span
+                className="font-mono-num normal-case tracking-normal"
+                style={{ color: "var(--ash-dim)" }}
+                role="status"
+              >
+                · {d.reconnecting}
+              </span>
+            )}
+          </div>
+          <h1
+            className="font-serif-display mx-auto mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
+            style={{ textWrap: "balance" }}
+          >
+            {d.titlePre}{" "}
+            <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
+            {d.subtitle}
+          </p>
+          <RotatingTagline items={d.taglines} reduce={!!reduce} />
+        </header>
+
+        {/* Play CTA — the natural next beat after the introduction, not competing with it. */}
+        <motion.div
+          initial={reduce ? undefined : { opacity: 0, y: -6 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE_OUT, delay: reduce ? 0 : 0.15 }}
+          className="relative z-10 mx-auto mt-8 max-w-sm"
+        >
+          <Link href="/demo" className="block">
+            <motion.div
+              whileHover={reduce ? undefined : { scale: 1.015 }}
+              whileTap={reduce ? undefined : { scale: 0.985 }}
+              animate={
+                reduce
+                  ? undefined
+                  : { boxShadow: ["0 10px 26px -14px rgba(255,150,60,0.65)", "0 10px 34px -10px rgba(255,180,80,0.85)", "0 10px 26px -14px rgba(255,150,60,0.65)"] }
+              }
+              transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", stiffness: 400, damping: 22 } }}
+              className="flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-center"
+              style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
+            >
+              <FlickerFlame />
+              <span className="text-[15px] font-bold sm:text-[16px]">{d.cta.demo}</span>
+            </motion.div>
+          </Link>
+        </motion.div>
+      </motion.section>
 
       {/* Controls: filters + search */}
       <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -428,7 +441,7 @@ function LeaderBar({
           <div className="mx-auto max-w-3xl px-5 pt-3">
             <Link
               href={guardianHref(leader.displayName)}
-              className="flex items-center gap-3 rounded-full border px-4 py-2.5 backdrop-blur"
+              className="flex min-h-11 items-center gap-3 rounded-full border px-4 backdrop-blur"
               style={{
                 borderColor: "var(--line-violet)",
                 background: "linear-gradient(90deg, rgba(25,17,40,0.92), rgba(20,14,32,0.92))",
@@ -892,6 +905,99 @@ function WallShareButton({ d }: { d: Dict }) {
 }
 
 /* ---------------------------------------------------- Ambient ember canvas */
+
+// A tiny living flame inside the CTA — cheap (one icon, no canvas) stand-in for "there's a
+// real fire in there," reinforcing the button is a portal into the actual mechanic.
+function FlickerFlame() {
+  return (
+    <motion.span
+      className="inline-flex"
+      animate={{ scale: [1, 1.12, 0.96, 1.05, 1], rotate: [0, -3, 2, -1, 0] }}
+      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <Flame size={18} fill="#1a0d04" style={{ color: "#1a0d04" }} />
+    </motion.span>
+  );
+}
+
+// Localized glow behind the hero card — slow-drifting warm radial blobs, distinct from the
+// page-wide AmbientEmbers (which is faint/decorative everywhere). This one is meant to be
+// felt: it's what gives the hero card weight instead of it reading as flat text on black.
+function HeroGlow({ reduce }: { reduce: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    const blobs = [
+      { baseX: 0.22, baseY: 0.15, r: 0.55, hue: "rgba(255,150,60,", speed: 0.00018, phase: 0, ampX: 0.08, ampY: 0.05 },
+      { baseX: 0.82, baseY: 0.1, r: 0.42, hue: "rgba(139,124,255,", speed: 0.00022, phase: 2.1, ampX: 0.06, ampY: 0.06 },
+      { baseX: 0.55, baseY: 0.9, r: 0.5, hue: "rgba(255,196,102,", speed: 0.00015, phase: 4.3, ampX: 0.07, ampY: 0.04 },
+    ];
+
+    const size = () => {
+      canvas.width = parent.clientWidth * DPR;
+      canvas.height = parent.clientHeight * DPR;
+    };
+    size();
+    const ro = new ResizeObserver(size);
+    ro.observe(parent);
+
+    if (reduce) {
+      // Reduced motion: paint one static frame instead of animating.
+      const w = canvas.width, h = canvas.height;
+      for (const b of blobs) {
+        const cx = b.baseX * w, cy = b.baseY * h, r = b.r * Math.max(w, h);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, b.hue + "0.16)");
+        g.addColorStop(1, b.hue + "0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+      return () => ro.disconnect();
+    }
+
+    let raf = 0;
+    const frame = (t: number) => {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "lighter";
+      for (const b of blobs) {
+        const cx = (b.baseX + Math.sin(t * b.speed + b.phase) * b.ampX) * w;
+        const cy = (b.baseY + Math.cos(t * b.speed * 0.8 + b.phase) * b.ampY) * h;
+        const r = b.r * Math.max(w, h);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, b.hue + "0.14)");
+        g.addColorStop(1, b.hue + "0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.globalCompositeOperation = "source-over";
+      if (document.hidden) {
+        raf = 0;
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const resume = () => {
+      if (!document.hidden && !raf) raf = requestAnimationFrame(frame);
+    };
+    document.addEventListener("visibilitychange", resume);
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      document.removeEventListener("visibilitychange", resume);
+    };
+  }, [reduce]);
+
+  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />;
+}
 
 export function AmbientEmbers({ reduce }: { reduce: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
