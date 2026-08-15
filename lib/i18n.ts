@@ -30,6 +30,14 @@ export type Dict = {
   leading: string;
   emptyState: string;
   taglines: string[];
+  viewAllGuardians: string;
+  guardiansPage: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    loadMore: string;
+    back: string;
+  };
   profile: {
     rank: string;
     of: string;
@@ -112,6 +120,14 @@ const en: Dict = {
     "One log at a time, together.",
     "Presence is the only requirement.",
   ],
+  viewAllGuardians: "View all guardians",
+  guardiansPage: {
+    eyebrow: "Every guardian",
+    title: "All guardians",
+    subtitle: "{n} guardians have kept the fire alive.",
+    loadMore: "Load more",
+    back: "Back to the Wall",
+  },
   profile: {
     rank: "Rank",
     of: "of",
@@ -195,6 +211,14 @@ const es: Dict = {
     "Un tronco a la vez, juntos.",
     "La presencia es el único requisito.",
   ],
+  viewAllGuardians: "Ver todos los guardianes",
+  guardiansPage: {
+    eyebrow: "Todos los guardianes",
+    title: "Todos los guardianes",
+    subtitle: "{n} guardianes han mantenido el fuego vivo.",
+    loadMore: "Cargar más",
+    back: "Volver al muro",
+  },
   profile: {
     rank: "Puesto",
     of: "de",

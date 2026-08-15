@@ -383,6 +383,19 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </p>
       )}
 
+      {entries.length > 10 && (
+        <div className="relative z-10 mt-5 flex justify-center">
+          <Link
+            href="/guardians"
+            className="inline-flex min-h-11 items-center gap-1 text-[13px] font-medium transition-colors hover:text-[var(--spark)]"
+            style={{ color: "var(--amber)" }}
+          >
+            {d.viewAllGuardians}
+            <ArrowUpRight size={13} />
+          </Link>
+        </div>
+      )}
+
       {/* Screen-reader table: the leaderboard as structured data (visuals alone aren't
           screen-reader friendly — WCAG). Hidden visually, announced to assistive tech. */}
       <table className="sr-only">
@@ -914,7 +927,7 @@ function HowItWorks({ d, reduce }: { d: Dict; reduce: boolean }) {
 
 /* --------------------------------------------------------------- Primitives */
 
-function GuardianDot({ big = false }: { big?: boolean }) {
+export function GuardianDot({ big = false }: { big?: boolean }) {
   const s = big ? 40 : 22;
   return (
     <span
@@ -930,7 +943,7 @@ function GuardianDot({ big = false }: { big?: boolean }) {
   );
 }
 
-function Badge({ brasas, d }: { brasas: number; d: Dict }) {
+export function Badge({ brasas, d }: { brasas: number; d: Dict }) {
   const b = badgeForBrasas(brasas, d);
   if (!b) return null;
   return (
@@ -943,7 +956,7 @@ function Badge({ brasas, d }: { brasas: number; d: Dict }) {
   );
 }
 
-function Brasas({ value, reduce, accent = false }: { value: number; reduce: boolean; accent?: boolean }) {
+export function Brasas({ value, reduce, accent = false }: { value: number; reduce: boolean; accent?: boolean }) {
   return (
     <span className="flex items-center gap-1.5" style={{ color: accent ? "var(--spark)" : "var(--amber)" }}>
       <Flame size={accent ? 16 : 14} strokeWidth={1.8} />
