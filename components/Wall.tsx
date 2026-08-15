@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
 import {
   motion,
   AnimatePresence,
@@ -160,16 +160,78 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
     }
   }
 
+  // First-visit onboarding — 3 short steps explaining what the Wall is, that the demo is
+  // playable, and where the rest of the site lives. Shown once (localStorage flag), Skip
+  // always available. Reads localStorage in an effect (not useState initializer) so SSR and
+  // the first client render agree — no hydration mismatch.
+  const [onboardStep, setOnboardStep] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("refugio-onboarding-seen")) setOnboardStep(0);
+    } catch {
+      /* localStorage unavailable — just skip onboarding rather than throw */
+    }
+  }, []);
+  function dismissOnboarding() {
+    setOnboardStep(null);
+    try {
+      localStorage.setItem("refugio-onboarding-seen", "1");
+    } catch {
+      /* best-effort persistence */
+    }
+  }
+
+  // Keyboard shortcuts: "/" jumps to search (common site convention), "?" toggles the help
+  // overlay that documents them, Escape closes the overlay or blurs whatever's focused. Only
+  // fires when not already typing in a field, so it doesn't hijack normal text entry.
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const isTyping = tag === "INPUT" || tag === "TEXTAREA";
+      if (e.key === "Escape") {
+        if (isTyping) (e.target as HTMLElement).blur();
+        setShowShortcuts(false);
+        if (onboardStep !== null) dismissOnboarding();
+        return;
+      }
+      // The onboarding overlay already has its own Skip/Next flow — "/" and "?" underneath it
+      // would open the search box or a second modal behind/over it, so they're a no-op while
+      // it's showing (caught live: both dialogs rendered stacked before this guard existed).
+      if (onboardStep !== null) return;
+      if (e.key === "/" && !isTyping) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === "?" && !isTyping) {
+        setShowShortcuts((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onboardStep]);
+
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-3xl px-5 pb-24 pt-14 sm:pt-20">
       <AmbientEmbers reduce={!!reduce} />
       {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} newRecord={recordPulse} />}
       <EasterEggBurst active={easterEgg} />
 
-      {/* Language toggle */}
-      <div className="relative z-10 flex justify-end">
+      {/* Language toggle + shortcuts help */}
+      <div className="relative z-10 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowShortcuts(true)}
+          aria-label={d.shortcuts.hint}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border font-mono-num text-[13px] transition-colors hover:text-[var(--warm-white)]"
+          style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
+        >
+          ?
+        </button>
         <LangToggle lang={lang} onClick={handleLangClick} reduce={!!reduce} />
       </div>
+      <ShortcutsHelp open={showShortcuts} onClose={() => setShowShortcuts(false)} d={d} />
+      <OnboardingTour step={onboardStep} onNext={() => setOnboardStep((s) => (s === null ? null : s + 1))} onDismiss={dismissOnboarding} d={d} />
 
       {/* Hero card — identity + CTA live inside one framed, glass-morphism surface instead of
           floating directly on the page background. HeroGlow gives it real depth (a felt light
@@ -250,7 +312,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       {/* Controls: filters + search */}
       <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Filters d={d} tf={tf} setTf={setTf} reduce={!!reduce} />
-        <SearchBox d={d} q={q} setQ={setQ} entries={entries} />
+        <SearchBox d={d} q={q} setQ={setQ} entries={entries} inputRef={searchInputRef} />
       </div>
 
       {empty ? (
@@ -708,7 +770,19 @@ function Filters({
   );
 }
 
-function SearchBox({ d, q, setQ, entries }: { d: Dict; q: string; setQ: (s: string) => void; entries: Guardian[] }) {
+function SearchBox({
+  d,
+  q,
+  setQ,
+  entries,
+  inputRef,
+}: {
+  d: Dict;
+  q: string;
+  setQ: (s: string) => void;
+  entries: Guardian[];
+  inputRef?: RefObject<HTMLInputElement>;
+}) {
   const router = useRouter();
   const [focused, setFocused] = useState(false);
   const query = q.trim().toLowerCase();
@@ -722,6 +796,7 @@ function SearchBox({ d, q, setQ, entries }: { d: Dict; q: string; setQ: (s: stri
       >
         <Search size={15} style={{ color: "var(--ash-dim)" }} />
         <input
+          ref={inputRef}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -760,6 +835,146 @@ function SearchBox({ d, q, setQ, entries }: { d: Dict; q: string; setQ: (s: stri
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// A real, minimal shortcuts reference — "/" and "?" are the only two that exist, so this
+// lists exactly two rows rather than padding out a longer list of things the site doesn't do.
+function ShortcutsHelp({ open, onClose, d }: { open: boolean; onClose: () => void; d: Dict }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <div className="absolute inset-0" style={{ background: "rgba(8,5,14,0.72)" }} aria-hidden />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={d.shortcuts.title}
+            className="card relative z-10 w-full max-w-xs p-5"
+            initial={{ opacity: 0, scale: 0.94, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-serif-display text-[17px] font-semibold" style={{ color: "var(--warm-white)" }}>
+              {d.shortcuts.title}
+            </h2>
+            <div className="mt-4 flex flex-col gap-2.5">
+              <ShortcutRow keyLabel="/" label={d.shortcuts.search} />
+              <ShortcutRow keyLabel="?" label={d.shortcuts.toggleHelp} />
+              <ShortcutRow keyLabel="Esc" label={d.shortcuts.close} />
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-5 min-h-11 w-full rounded-lg border text-[13px] font-medium transition-colors hover:text-[var(--warm-white)]"
+              style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
+            >
+              {d.shortcuts.close}
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ShortcutRow({ keyLabel, label }: { keyLabel: string; label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+        {label}
+      </span>
+      <kbd
+        className="font-mono-num rounded-md border px-2 py-1 text-[12px]"
+        style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)", background: "var(--surface-2)" }}
+      >
+        {keyLabel}
+      </kbd>
+    </div>
+  );
+}
+
+function OnboardingTour({
+  step,
+  onNext,
+  onDismiss,
+  d,
+}: {
+  step: number | null;
+  onNext: () => void;
+  onDismiss: () => void;
+  d: Dict;
+}) {
+  const steps = d.onboarding.steps;
+  const open = step !== null && step < steps.length;
+  const current = open ? steps[step as number] : null;
+  const isLast = step === steps.length - 1;
+
+  return (
+    <AnimatePresence>
+      {open && current && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-end justify-center p-5 sm:items-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="absolute inset-0" style={{ background: "rgba(8,5,14,0.72)" }} aria-hidden />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={current.title}
+            className="card relative z-10 w-full max-w-sm p-6 text-center"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          >
+            <div className="flex items-center justify-center gap-1.5">
+              {steps.map((_, i) => (
+                <span
+                  key={i}
+                  className="h-1.5 rounded-full transition-all"
+                  style={{ width: i === step ? 18 : 6, background: i === step ? "var(--ember)" : "var(--line)" }}
+                />
+              ))}
+            </div>
+            <h2 className="font-serif-display mt-4 text-[19px] font-semibold" style={{ color: "var(--warm-white)" }}>
+              {current.title}
+            </h2>
+            <p className="mt-2 text-[14px]" style={{ color: "var(--ash)" }}>
+              {current.body}
+            </p>
+            <div className="mt-6 flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={onDismiss}
+                className="min-h-11 flex-1 rounded-lg border text-[13px] font-medium transition-colors hover:text-[var(--warm-white)]"
+                style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
+              >
+                {d.onboarding.skip}
+              </button>
+              <button
+                type="button"
+                onClick={isLast ? onDismiss : onNext}
+                className="min-h-11 flex-1 rounded-lg text-[13px] font-bold"
+                style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
+              >
+                {isLast ? d.onboarding.done : d.onboarding.next}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

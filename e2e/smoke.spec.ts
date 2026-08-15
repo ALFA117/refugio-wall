@@ -45,3 +45,34 @@ test("/compare lets you pick two guardians and shows a delta", async ({ page }) 
   await page.goto("/compare?a=emberkeeper.eth&b=nightowl");
   await expect(page.getByText(/is ahead by/)).toBeVisible();
 });
+
+test.describe("first-visit onboarding", () => {
+  // Overrides the suite-wide pre-seeded storage state (see playwright.config.ts) — this is
+  // the one test that specifically needs a truly fresh, never-seen-it-before session.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("shows once, walks through 3 steps, and does not block the page after dismissal", async ({ page }) => {
+    await page.goto("/");
+    const dialog = page.getByRole("dialog", { name: "This is the Wall" });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole("button", { name: "Next" }).click();
+    await expect(page.getByRole("dialog", { name: "Try it yourself" })).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Next" }).click();
+    await expect(page.getByRole("dialog", { name: "Explore further" })).toBeVisible();
+
+    await page.getByRole("dialog").getByRole("button", { name: "Got it" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+    // A real click on the language toggle must land now that nothing is covering it.
+    await page.getByRole("button", { name: "Switch language" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  });
+
+  test("Skip dismisses immediately and does not reappear on reload", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("dialog").getByRole("button", { name: "Skip" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await page.reload();
+    await expect(page.getByRole("dialog")).toBeHidden();
+  });
+});

@@ -15,6 +15,14 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3100",
     trace: "on-first-retry",
+    // Every test gets a fresh browser context (fresh localStorage), which means the first-
+    // visit onboarding overlay would block every single test's first interaction — that's
+    // correct app behavior (a modal should block the background), just not what these smoke/
+    // a11y tests are checking. Pre-seed the "seen" flag so they land on the real page instead.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: "http://localhost:3100", localStorage: [{ name: "refugio-onboarding-seen", value: "1" }] }],
+    },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {

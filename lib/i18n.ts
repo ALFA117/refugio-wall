@@ -31,6 +31,19 @@ export type Dict = {
   emptyState: string;
   taglines: string[];
   viewAllGuardians: string;
+  shortcuts: {
+    hint: string;
+    title: string;
+    search: string;
+    toggleHelp: string;
+    close: string;
+  };
+  onboarding: {
+    skip: string;
+    next: string;
+    done: string;
+    steps: { title: string; body: string }[];
+  };
   comparePage: {
     eyebrow: string;
     title: string;
@@ -146,6 +159,23 @@ const en: Dict = {
     "Presence is the only requirement.",
   ],
   viewAllGuardians: "View all guardians",
+  shortcuts: {
+    hint: "Keyboard shortcuts",
+    title: "Keyboard shortcuts",
+    search: "Jump to search",
+    toggleHelp: "Show this help",
+    close: "Close",
+  },
+  onboarding: {
+    skip: "Skip",
+    next: "Next",
+    done: "Got it",
+    steps: [
+      { title: "This is the Wall", body: "The public leaderboard for Refugio — a Decentraland campfire that only burns when people actually show up." },
+      { title: "Try it yourself", body: "No install needed. The demo runs the real feed-the-fire mechanic right in your browser." },
+      { title: "Explore further", body: "Compare guardians, browse the full roster, or check community stats — all linked from the footer." },
+    ],
+  },
   comparePage: {
     eyebrow: "Head to head",
     title: "Compare guardians",
@@ -262,6 +292,23 @@ const es: Dict = {
     "La presencia es el único requisito.",
   ],
   viewAllGuardians: "Ver todos los guardianes",
+  shortcuts: {
+    hint: "Atajos de teclado",
+    title: "Atajos de teclado",
+    search: "Ir a la búsqueda",
+    toggleHelp: "Mostrar esta ayuda",
+    close: "Cerrar",
+  },
+  onboarding: {
+    skip: "Saltar",
+    next: "Siguiente",
+    done: "Entendido",
+    steps: [
+      { title: "Esto es el Muro", body: "El leaderboard público de Refugio — una fogata de Decentraland que solo arde cuando la gente realmente aparece." },
+      { title: "Pruébalo tú mismo", body: "Sin instalar nada. La demo corre la mecánica real de alimentar el fuego directo en tu navegador." },
+      { title: "Explora más", body: "Compara guardianes, mira el listado completo o revisa las estadísticas de la comunidad — todo enlazado desde el pie de página." },
+    ],
+  },
   comparePage: {
     eyebrow: "Cara a cara",
     title: "Comparar guardianes",
