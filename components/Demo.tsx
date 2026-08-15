@@ -260,11 +260,15 @@ export function Demo() {
                   : "0 30px 90px -40px rgba(255,122,45,0.4)",
               }}
             >
-              <MilestoneBurst trigger={milestone} reduce={!!reduce} />
-              <MissFlash trigger={missFlash} reduce={!!reduce} />
               <div className="relative">
                 <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
                 <GuardianRing guardians={guardians} reduce={!!reduce} />
+                {/* Both measure "inset-0" against THIS box (the canvas area only) — they were
+                    previously siblings of this div instead of children, so inset-0 resolved
+                    against the whole card (canvas + controls section below), making a miss
+                    flash or milestone burst paint over the stats/buttons too. */}
+                <MilestoneBurst trigger={milestone} reduce={!!reduce} />
+                <MissFlash trigger={missFlash} reduce={!!reduce} />
 
                 <div className="pointer-events-none absolute inset-x-0 bottom-[50px] flex justify-center gap-6 sm:bottom-[60px] sm:gap-9">
                   {Array.from({ length: WOOD_SLOTS }).map((_, slot) => {
