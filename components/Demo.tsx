@@ -408,26 +408,9 @@ function StartScreen({
         {d.subtitle}
       </motion.p>
 
-      {/* Idle preview flame */}
-      <motion.div
-        {...anim(0.16)}
-        className="relative mt-7 w-full overflow-hidden rounded-2xl border"
-        style={{
-          borderColor: "var(--line-strong)",
-          background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #060410 70%)",
-          boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
-        }}
-      >
-        <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
-        <GuardianRing guardians={previewGuardians} reduce={reduce} />
-        <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
-          <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
-            {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
-          </span>
-        </div>
-      </motion.div>
-
-      <motion.div {...anim(0.22)} className="mt-6 w-full">
+      {/* Difficulty + Play sit right here, high up — no scrolling past the preview required
+          to get to the one thing that matters: starting. */}
+      <motion.div {...anim(0.16)} className="mt-6 w-full">
         <div className="mb-2 text-[11px] font-medium uppercase tracking-widest" style={{ color: "var(--violet)" }}>
           {d.difficulty}
         </div>
@@ -463,22 +446,45 @@ function StartScreen({
       </motion.div>
 
       <motion.button
-        {...anim(0.28)}
+        {...anim(0.22)}
         type="button"
         onClick={onPlay}
         whileHover={reduce ? undefined : { scale: 1.03 }}
         whileTap={reduce ? undefined : { scale: 0.96 }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="mt-7 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full text-[16px] font-semibold"
+        animate={
+          reduce
+            ? undefined
+            : { boxShadow: ["0 16px 40px -14px rgba(255,150,60,0.8)", "0 16px 56px -8px rgba(255,180,80,1)", "0 16px 40px -14px rgba(255,150,60,0.8)"] }
+        }
+        transition={{ boxShadow: { duration: 1.8, repeat: Infinity, ease: "easeInOut" } }}
+        className="mt-4 inline-flex min-h-16 w-full items-center justify-center gap-2 rounded-full text-[18px] font-bold"
         style={{
           background: "linear-gradient(90deg, var(--ember), var(--spark))",
           color: "#1a0d04",
-          boxShadow: "0 16px 40px -14px rgba(255,150,60,0.8)",
         }}
       >
-        <Play size={18} fill="#1a0d04" />
+        <Play size={20} fill="#1a0d04" />
         {d.play}
       </motion.button>
+
+      {/* A peek at the fire before you commit — supporting visual, no longer gatekeeping Play */}
+      <motion.div
+        {...anim(0.3)}
+        className="relative mt-7 w-full overflow-hidden rounded-2xl border"
+        style={{
+          borderColor: "var(--line-strong)",
+          background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #060410 70%)",
+          boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
+        }}
+      >
+        <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
+        <GuardianRing guardians={previewGuardians} reduce={reduce} />
+        <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
+          <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
+            {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
+          </span>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

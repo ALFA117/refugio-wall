@@ -11,7 +11,7 @@ import {
   type Variants,
 } from "framer-motion";
 import Link from "next/link";
-import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown } from "lucide-react";
+import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Play } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { useLang } from "./useLang";
@@ -127,6 +127,33 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           {d.langLabel}
         </button>
       </div>
+
+      {/* Prominent play CTA — the demo used to live only as a small footer link; the top of
+          the page should invite you to actually try the mechanic, not just read a leaderboard. */}
+      <motion.div
+        initial={reduce ? undefined : { opacity: 0, y: -10 }}
+        animate={reduce ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE_OUT }}
+        className="relative z-10 mt-5"
+      >
+        <Link href="/demo" className="block">
+          <motion.div
+            whileHover={reduce ? undefined : { scale: 1.015 }}
+            whileTap={reduce ? undefined : { scale: 0.985 }}
+            animate={
+              reduce
+                ? undefined
+                : { boxShadow: ["0 14px 34px -14px rgba(255,150,60,0.7)", "0 14px 46px -6px rgba(255,180,80,0.95)", "0 14px 34px -14px rgba(255,150,60,0.7)"] }
+            }
+            transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", stiffness: 400, damping: 22 } }}
+            className="flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-center"
+            style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
+          >
+            <Play size={18} fill="#1a0d04" />
+            <span className="text-[15px] font-bold sm:text-[16px]">{d.cta.demo}</span>
+          </motion.div>
+        </Link>
+      </motion.div>
 
       {/* Header */}
       <motion.header
