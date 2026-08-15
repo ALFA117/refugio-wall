@@ -23,7 +23,7 @@ export type Dict = {
   howTitle: string;
   howEyebrow: string;
   systems: System[];
-  badges: { firekeeper: string; ember: string; kindling: string };
+  badges: { eternal: string; firekeeper: string; ember: string; kindling: string; spark: string };
   langLabel: string;
   brasas: string;
   rounds: string;
@@ -31,6 +31,16 @@ export type Dict = {
   emptyState: string;
   taglines: string[];
   viewAllGuardians: string;
+  comparePage: {
+    eyebrow: string;
+    title: string;
+    pickPlaceholder: string;
+    clear: string;
+    ahead: string;
+    tied: string;
+    back: string;
+    compare: string;
+  };
   statsPage: {
     eyebrow: string;
     title: string;
@@ -120,7 +130,7 @@ const en: Dict = {
     { name: "Referral", blurb: "Invite a friend; both earn a bonus after a round together." },
     { name: "No host", blurb: "The server runs the rounds — it works even if you arrive cold." },
   ],
-  badges: { firekeeper: "Firekeeper", ember: "Ember", kindling: "Kindling" },
+  badges: { eternal: "Eternal Flame", firekeeper: "Firekeeper", ember: "Ember", kindling: "Kindling", spark: "Spark" },
   langLabel: "ES",
   brasas: "embers",
   rounds: "rounds",
@@ -133,6 +143,16 @@ const en: Dict = {
     "Presence is the only requirement.",
   ],
   viewAllGuardians: "View all guardians",
+  comparePage: {
+    eyebrow: "Head to head",
+    title: "Compare guardians",
+    pickPlaceholder: "Search a guardian…",
+    clear: "Remove",
+    ahead: "{name} is ahead by {n} embers.",
+    tied: "It's a tie.",
+    back: "Back to the Wall",
+    compare: "Compare",
+  },
   statsPage: {
     eyebrow: "The numbers",
     title: "Fire stats",
@@ -223,7 +243,7 @@ const es: Dict = {
     { name: "Invitación", blurb: "Invita a alguien; ambos ganan bonus tras una ronda juntos." },
     { name: "Sin host", blurb: "El servidor corre las rondas — funciona aunque llegues solo." },
   ],
-  badges: { firekeeper: "Guardián", ember: "Brasa", kindling: "Chispa" },
+  badges: { eternal: "Llama Eterna", firekeeper: "Guardián", ember: "Brasa", kindling: "Leña", spark: "Chispa" },
   langLabel: "EN",
   brasas: "brasas",
   rounds: "rondas",
@@ -236,6 +256,16 @@ const es: Dict = {
     "La presencia es el único requisito.",
   ],
   viewAllGuardians: "Ver todos los guardianes",
+  comparePage: {
+    eyebrow: "Cara a cara",
+    title: "Comparar guardianes",
+    pickPlaceholder: "Buscar un guardián…",
+    clear: "Quitar",
+    ahead: "{name} va adelante por {n} brasas.",
+    tied: "Están empatados.",
+    back: "Volver al muro",
+    compare: "Comparar",
+  },
   statsPage: {
     eyebrow: "Los números",
     title: "Estadísticas del fuego",

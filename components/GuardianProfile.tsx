@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, ArrowLeft, Share2, Crown, Check } from "lucide-react";
+import { Flame, ArrowLeft, Share2, Crown, Check, Swords } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
@@ -124,7 +124,17 @@ export function GuardianProfile({
             )}
           </div>
 
-          <ShareButton d={d} />
+          <div className="mt-10 flex items-center gap-3">
+            <ShareButton d={d} />
+            <Link
+              href={`/compare?a=${encodeURIComponent(guardian.displayName)}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
+              style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+            >
+              <Swords size={15} style={{ color: "var(--amber)" }} />
+              {d.comparePage.compare}
+            </Link>
+          </div>
         </motion.section>
       ) : (
         <section className="relative z-10 mt-24 flex flex-col items-center text-center">
@@ -174,7 +184,7 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
       onClick={share}
       whileTap={TAP_PRESS}
       transition={SNAPPY}
-      className="mt-10 inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
+      className="inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
       {copied ? <Check size={15} style={{ color: "var(--gold)" }} /> : <Share2 size={15} style={{ color: "var(--amber)" }} />}
