@@ -208,8 +208,13 @@ export function Demo() {
                 <div className="pointer-events-none absolute inset-x-0 bottom-[50px] flex justify-center gap-6 sm:bottom-[60px] sm:gap-9">
                   {Array.from({ length: WOOD_SLOTS }).map((_, slot) => {
                     const w = wood.find((piece) => piece.slot === slot);
+                    const jitter = (seatRandom(slot * 29 + 8) - 0.5) * 16; // uneven row, not a ruler-straight line
                     return (
-                    <div key={slot} className="pointer-events-auto flex h-12 w-12 items-center justify-center">
+                    <div
+                      key={slot}
+                      className="pointer-events-auto flex h-12 w-12 items-center justify-center"
+                      style={{ transform: `translateY(${jitter}px)` }}
+                    >
                       <AnimatePresence>
                         {w && (
                           <motion.button
@@ -637,44 +642,123 @@ function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: str
 // for the start-screen preview, ignoring the click-to-feed game state.
 /* ---------------------------------------------------------------- Guardian ring */
 
-// The real scene seats guardians in a circle of 8 around the campfire — this recreates that
-// arrangement as a flattened ellipse around the flame's base (a side-view perspective, not a
-// top-down map), instead of the flat inline row of dots used before. Each seat animates a
-// guardian in/out with a spring "arrival", so growing the circle visibly reads as "someone
-// sat down" rather than a counter ticking.
+// Deterministic pseudo-random in [0,1) — seeded by seat index so jitter/color/size are
+// stable across renders (not re-rolled every frame) but differ per seat, breaking up what
+// would otherwise be a perfectly even, mechanical-looking ring.
+function seatRandom(seed: number): number {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+const SEAT_HUES: [string, string][] = [
+  ["var(--spark)", "var(--ember)"],
+  ["#ffcf6b", "#ff8a3d"],
+  ["#ffe08a", "#ff6a2d"],
+  ["var(--amber)", "#e8531f"],
+];
+
+// Precomputed per-seat layout: angle/radius jitter, size, color and idle-breathing phase —
+// all seeded by index so the ring reads as 8 distinct people, not one dot copy-pasted 8
+// times. `depth` (0=far/small/dim, 1=near/big/bright) fakes perspective on the flattened
+// ellipse so seats don't all render at identical size — the thing that most made it look
+// like a stamped-out pattern rather than people actually sitting around a fire.
+const SEATS = Array.from({ length: SEAT_COUNT }, (_, i) => {
+  const angle = (i / SEAT_COUNT) * Math.PI * 2 - Math.PI / 2 + (seatRandom(i * 3 + 1) - 0.5) * 0.3;
+  const rx = 36 + (seatRandom(i * 3 + 2) - 0.5) * 6;
+  const ry = 6 + (seatRandom(i * 3 + 3) - 0.5) * 2;
+  const depth = (Math.sin(angle) + 1) / 2; // 0 = back of the circle, 1 = front
+  return {
+    left: 50 + Math.cos(angle) * rx,
+    top: 90 + Math.sin(angle) * ry,
+    depth,
+    size: 9 + depth * 7 + seatRandom(i * 5 + 7) * 2,
+    colors: SEAT_HUES[Math.floor(seatRandom(i * 11 + 2) * SEAT_HUES.length)],
+    breathPhase: seatRandom(i * 13 + 4) * 2,
+    breathDur: 2.2 + seatRandom(i * 17 + 6) * 1.6,
+  };
+});
+
 function GuardianRing({ guardians, reduce }: { guardians: number; reduce: boolean }) {
   return (
     <div className="pointer-events-none absolute inset-0">
-      {Array.from({ length: SEAT_COUNT }).map((_, i) => {
+      {SEATS.map((seat, i) => {
         const occupied = i < guardians;
-        // Flattened ellipse hugging the bottom edge — sits below the wood-feeding zone so the
-        // two never visually compete for the same band.
-        const angle = (i / SEAT_COUNT) * Math.PI * 2 - Math.PI / 2;
-        const left = 50 + Math.cos(angle) * 38;
-        const top = 90 + Math.sin(angle) * 6;
+        const opacity = 0.55 + seat.depth * 0.45;
         return (
-          <div key={i} className="absolute" style={{ left: `${left}%`, top: `${top}%`, transform: "translate(-50%, -50%)" }}>
+          <div
+            key={i}
+            className="absolute"
+            style={{ left: `${seat.left}%`, top: `${seat.top}%`, transform: "translate(-50%, -50%)", zIndex: Math.round(seat.depth * 10) }}
+          >
             <AnimatePresence>
               {occupied && (
                 <motion.span
-                  initial={reduce ? undefined : { scale: 0, opacity: 0, y: 8 }}
-                  animate={reduce ? undefined : { scale: 1, opacity: 1, y: 0 }}
+                  initial={
+                    reduce
+                      ? undefined
+                      : { scale: 0, opacity: 0, x: (seatRandom(i * 19 + 3) - 0.5) * 14, y: 10 }
+                  }
+                  animate={
+                    reduce
+                      ? undefined
+                      : {
+                          scale: [0, 1.25, 1],
+                          opacity,
+                          x: 0,
+                          y: 0,
+                        }
+                  }
                   exit={reduce ? undefined : { scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 360, damping: 20 }}
-                  className="block rounded-full"
+                  transition={{ type: "spring", stiffness: 340, damping: 18 }}
+                  className="relative block rounded-full"
                   style={{
-                    width: 13,
-                    height: 13,
-                    background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
-                    boxShadow: "0 0 9px rgba(255,140,40,0.65)",
+                    width: seat.size,
+                    height: seat.size,
+                    background: `radial-gradient(circle at 35% 30%, ${seat.colors[0]}, ${seat.colors[1]} 72%)`,
+                    boxShadow: `0 0 ${6 + seat.depth * 8}px rgba(255,140,40,${0.4 + seat.depth * 0.4})`,
                   }}
-                />
+                >
+                  {/* Idle breathing — a slow independent pulse per seat so a full ring still
+                      reads as alive, not eight identical static dots. */}
+                  {!reduce && (
+                    <motion.span
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: `radial-gradient(circle at 35% 30%, ${seat.colors[0]}, ${seat.colors[1]} 72%)` }}
+                      animate={{ scale: [1, 1.22, 1], opacity: [0.9, 0.5, 0.9] }}
+                      transition={{ duration: seat.breathDur, repeat: Infinity, ease: "easeInOut", delay: seat.breathPhase }}
+                    />
+                  )}
+                  {/* Arrival spark puff */}
+                  {!reduce && <SeatArrivalBurst colors={seat.colors} />}
+                </motion.span>
               )}
             </AnimatePresence>
           </div>
         );
       })}
     </div>
+  );
+}
+
+// A handful of tiny sparks kick off outward the instant a guardian takes their seat.
+function SeatArrivalBurst({ colors }: { colors: [string, string] }) {
+  return (
+    <span className="pointer-events-none absolute inset-0">
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.random() * 0.6;
+        const dist = 10 + Math.random() * 6;
+        return (
+          <motion.span
+            key={i}
+            className="absolute left-1/2 top-1/2 rounded-full"
+            style={{ width: 3, height: 3, background: colors[0] }}
+            initial={{ x: 0, y: 0, opacity: 1 }}
+            animate={{ x: Math.cos(a) * dist, y: Math.sin(a) * dist, opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        );
+      })}
+    </span>
   );
 }
 
