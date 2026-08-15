@@ -1,10 +1,31 @@
 # Wall of Guardians 🔥
 
-The public leaderboard companion for **[Refugio](https://github.com/ALFA117/Refugio)** — a Decentraland (SDK7) campfire that only burns when people show up. This site shows the top guardians and their embers *outside* the metaverse, so the ranking is shareable on the web (the "Retention & Discovery" angle of the hackathon).
+The public companion for **[Refugio](https://github.com/ALFA117/Refugio)** — a Decentraland (SDK7) campfire that only burns when people show up. Two things live here:
 
-Built with **Next.js (App Router)**, **Framer Motion**, and **Tailwind**, in the same ember/night visual world as the in-scene UI and the pitch page.
+- **The Wall** (`/`) — the public leaderboard, *outside* the metaverse, so the ranking is shareable on the web (the "Retention & Discovery" angle of the hackathon).
+- **The Demo** (`/demo`) — a playable, no-install taste of the real feed-the-fire mechanic, for pitching to people who can't or won't install the Decentraland client.
 
-## How data flows
+Built with **Next.js 14 (App Router)**, **Framer Motion**, and **Tailwind**, in the same "Twilight Ember" visual world as the in-scene UI and the pitch page. Bilingual (EN default, ES toggle) via a shared `useLang` hook.
+
+## The Wall (`/`)
+
+- Live leaderboard with All-time / This week / Today filters (synced to the URL — `?tf=week` is itself shareable)
+- Search with highlight, milestone badges, a sticky "leading" bar once the podium scrolls away
+- Deep-linkable guardian profiles at `/guardians/[name]`, each with a personalized Open Graph share card, a Web Share button, and rank/streak stats
+- A hidden easter egg (5 rapid taps on the language toggle)
+- Installable as a PWA ("Add to Home Screen")
+
+## The Demo (`/demo`)
+
+A small, real game — not just a readout:
+
+- **Start screen** with 3 difficulty modes (Easy/Normal/Hard — tune wood timing, decay, and how many pieces of firewood can be alight at once)
+- **8-seat guardian ring** around a layered campfire (matches the real scene's seat count), with organic per-seat jitter, depth, and color variety instead of a mechanical uniform pattern
+- **Feed-the-fire loop**: tap wood before it burns out; streak + best-streak tracking, milestone spark bursts, a low-health warning pulse, haptic feedback on supported devices
+- **Game over** screen with your best streak and a share button when the fire goes out
+- Difficulty and best streak persist across visits (localStorage)
+
+## How the Wall's data flows
 
 ```
 Decentraland Multiplayer Server  ──signedFetch(POST)──▶  /api/leaderboard  ──▶  Vercel KV
@@ -12,7 +33,7 @@ Decentraland Multiplayer Server  ──signedFetch(POST)──▶  /api/leaderbo
                                           Web page  ◀──── getLeaderboard() ◀────────┘
 ```
 
-When a round closes, the authoritative server `signedFetch`es a snapshot of the top guardians to `POST /api/leaderboard` (guarded by a shared secret). The route stores it in **Vercel KV** (Upstash Redis) — a single JSON value, no SQL, no schema; the page reads it back.
+When a round closes, the authoritative server `signedFetch`es a snapshot of the top guardians to `POST /api/leaderboard` (guarded by a shared secret). The route stores it in **Vercel KV** (Upstash Redis) — a single JSON value, no SQL, no schema; the page reads it back and polls every 30s once live.
 
 **Until KV is wired, the site serves representative sample data** so it deploys and looks right immediately.
 
@@ -31,4 +52,4 @@ npm run dev
 
 ## Deploy
 
-Deploys to Vercel. Set the env vars in the project settings; no env is required for the sample-data preview.
+Deploys to Vercel. Set the env vars in the project settings; no env is required for the sample-data preview. Live at [wall-of-guardians.vercel.app](https://wall-of-guardians.vercel.app).
