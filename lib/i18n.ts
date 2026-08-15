@@ -17,6 +17,7 @@ export type Dict = {
   you: string;
   footerLive: string;
   footerPreview: string;
+  footerStats: { guardians: string; totalBrasas: string };
   reconnecting: string;
   cta: { scene: string; sceneSoon: string; demo: string; github: string; share: string; copied: string };
   howTitle: string;
@@ -39,6 +40,7 @@ export type Dict = {
     notFound: string;
     notFoundBody: string;
     viewFull: string;
+    aheadOfPct: string;
   };
   demo: {
     eyebrow: string;
@@ -84,6 +86,7 @@ const en: Dict = {
   you: "you",
   footerLive: "Updates as rounds complete in the scene.",
   footerPreview: "Preview data — goes live once the scene starts pushing rounds.",
+  footerStats: { guardians: "Guardians", totalBrasas: "Total embers" },
   reconnecting: "reconnecting…",
   cta: { scene: "Enter the scene", sceneSoon: "Scene — publishing soon", demo: "Try it in your browser", github: "GitHub", share: "Share", copied: "Link copied" },
   howTitle: "How the fire works",
@@ -119,6 +122,7 @@ const en: Dict = {
     notFound: "No such guardian",
     notFoundBody: "This name isn't on the Wall yet.",
     viewFull: "View full profile",
+    aheadOfPct: "Ahead of {pct}% of guardians",
   },
   demo: {
     eyebrow: "Try it — no install",
@@ -165,6 +169,7 @@ const es: Dict = {
   you: "tú",
   footerLive: "Se actualiza cuando terminan rondas en la escena.",
   footerPreview: "Datos de muestra — se activa cuando la escena empiece a enviar rondas.",
+  footerStats: { guardians: "Guardianes", totalBrasas: "Brasas totales" },
   reconnecting: "reconectando…",
   cta: { scene: "Entrar a la escena", sceneSoon: "Escena — próximamente", demo: "Pruébalo en tu navegador", github: "GitHub", share: "Compartir", copied: "Enlace copiado" },
   howTitle: "Cómo funciona el fuego",
@@ -200,6 +205,7 @@ const es: Dict = {
     notFound: "Guardián no encontrado",
     notFoundBody: "Este nombre aún no está en el muro.",
     viewFull: "Ver perfil completo",
+    aheadOfPct: "Por delante del {pct}% de guardianes",
   },
   demo: {
     eyebrow: "Pruébalo — sin instalar nada",

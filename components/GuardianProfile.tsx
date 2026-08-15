@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, ArrowLeft, Share2, Crown, Languages, Check } from "lucide-react";
+import { Flame, ArrowLeft, Share2, Crown, Check } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
 import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
+import { LangToggle } from "./LangToggle";
 
 export function GuardianProfile({
   guardian,
@@ -27,9 +28,23 @@ export function GuardianProfile({
   const [lang, setLang] = useLang();
   const d = DICTS[lang];
   const isFirst = rank === 0;
+  // "Ahead of X%" — only meaningful once there's more than one guardian to compare against.
+  const percentile = guardian && rank >= 0 && total > 1 ? Math.round(((total - rank - 1) / (total - 1)) * 100) : null;
 
   return (
     <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-8">
+      {guardian && (
+        // Full-bleed glow behind the header — breaks out of the max-w-lg column so the profile
+        // has a real light source instead of the avatar floating on flat black, same idea as
+        // the Wall's hero card but as an edge-to-edge band rather than a bordered surface.
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-screen -translate-x-1/2"
+          style={{
+            background: "radial-gradient(60% 55% at 50% 0%, rgba(255,150,60,0.16), rgba(255,150,60,0) 70%)",
+          }}
+        />
+      )}
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between">
         <Link
@@ -40,15 +55,7 @@ export function GuardianProfile({
           <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
           {d.profile.back}
         </Link>
-        <button
-          onClick={() => setLang(lang === "en" ? "es" : "en")}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
-          style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
-          aria-label="Switch language"
-        >
-          <Languages size={13} style={{ color: "var(--violet)" }} />
-          {d.langLabel}
-        </button>
+        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
       </div>
 
       {guardian ? (
@@ -90,6 +97,11 @@ export function GuardianProfile({
           <div className="mt-2 font-mono-num text-[13px] tracking-wide" style={{ color: "var(--violet)" }}>
             {d.profile.rank} #{rank + 1} {d.profile.of} {total}
           </div>
+          {percentile !== null && percentile > 0 && (
+            <div className="mt-1 text-[12.5px]" style={{ color: "var(--ash-dim)" }}>
+              {d.profile.aheadOfPct.replace("{pct}", String(percentile))}
+            </div>
+          )}
 
           <div className="mt-8 flex items-end gap-2" style={{ color: "var(--spark)" }}>
             <Flame size={30} strokeWidth={1.8} className="mb-1.5" />

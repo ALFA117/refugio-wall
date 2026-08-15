@@ -14,13 +14,14 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, ChevronUp, Share2, Check } from "lucide-react";
+import { Flame, Crown, ArrowUpRight, Search, ChevronDown, ChevronUp, Share2, Check } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
 import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
+import { LangToggle } from "./LangToggle";
 
 // Deep-linkable profile URL for a guardian.
 export const guardianHref = (name: string) => `/guardians/${encodeURIComponent(name)}`;
@@ -119,6 +120,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const anyMatch = query ? entries.some((e) => e.displayName.toLowerCase().includes(query)) : true;
   const leader = entries[0] ?? null;
   const empty = entries.length === 0;
+  const totalBrasas = entries.reduce((sum, g) => sum + g.brasas, 0);
 
   // "New record" pulse: only meaningful with real live data (auto-refresh polling), so this
   // only ever fires when bundle.source === "live" and a fresh poll shows the leader's embers
@@ -166,15 +168,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
 
       {/* Language toggle */}
       <div className="relative z-10 flex justify-end">
-        <button
-          onClick={handleLangClick}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
-          style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
-          aria-label="Switch language"
-        >
-          <Languages size={13} style={{ color: "var(--violet)" }} />
-          {d.langLabel}
-        </button>
+        <LangToggle lang={lang} onClick={handleLangClick} reduce={!!reduce} />
       </div>
 
       {/* Hero card — identity + CTA live inside one framed, glass-morphism surface instead of
@@ -260,7 +254,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       </div>
 
       {empty ? (
-        <EmptyState d={d} />
+        <EmptyState d={d} reduce={!!reduce} />
       ) : (
         <>
       {/* Podium */}
@@ -415,24 +409,42 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
 
       <HowItWorks d={d} reduce={!!reduce} />
 
-      {/* Footer */}
+      {/* Footer — brand, live stats, and links as three real columns instead of one stacked
+          line; gives the page a floor instead of just trailing off after the last card. */}
       <motion.footer
-        className="relative z-10 mt-16 flex flex-col items-center gap-5 text-center"
+        className="relative z-10 mt-16 border-t pt-10"
+        style={{ borderColor: "var(--line)" }}
         initial={reduce ? undefined : { opacity: 0 }}
         whileInView={reduce ? undefined : { opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <p className="max-w-sm text-[13px]" style={{ color: "var(--ash-dim)" }}>
-          {bundle.source === "live" ? d.footerLive : d.footerPreview}
-        </p>
-        <div className="flex flex-wrap justify-center gap-2.5">
-          <FooterLink label={d.cta.sceneSoon} disabled />
-          <FooterLink href="/demo" label={d.cta.demo} />
-          <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
-          <WallShareButton d={d} />
+        <div className="grid grid-cols-1 gap-8 text-center sm:grid-cols-3 sm:text-left">
+          <div className="flex flex-col items-center sm:items-start">
+            <div className="flex items-center gap-2">
+              <span aria-hidden style={{ fontSize: 17 }}>🔥</span>
+              <span className="font-serif-display text-[15px] font-semibold" style={{ color: "var(--warm-white)" }}>
+                Refugio
+              </span>
+            </div>
+            <p className="mt-2 max-w-[220px] text-[12.5px]" style={{ color: "var(--ash-dim)" }}>
+              {bundle.source === "live" ? d.footerLive : d.footerPreview}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center gap-2 sm:items-start">
+            <FooterStat label={d.footerStats.guardians} value={entries.length} reduce={!!reduce} />
+            <FooterStat label={d.footerStats.totalBrasas} value={totalBrasas} reduce={!!reduce} />
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2.5 sm:justify-start">
+            <FooterLink label={d.cta.sceneSoon} disabled />
+            <FooterLink href="/demo" label={d.cta.demo} />
+            <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
+            <WallShareButton d={d} />
+          </div>
         </div>
-        <div className="mt-2 font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
+        <div className="mt-10 text-center font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
           REFUGIO · 🔥 · BUILT ON DECENTRALAND
         </div>
       </motion.footer>
@@ -502,18 +514,37 @@ function LeaderBar({
 }
 
 // Shown when there are no guardians yet (e.g. KV is live but the scene hasn't pushed a round).
-function EmptyState({ d }: { d: Dict }) {
+function EmptyState({ d, reduce }: { d: Dict; reduce: boolean }) {
   return (
     <div className="relative z-10 mt-20 flex flex-col items-center text-center">
       <div
-        className="rounded-full"
+        className="flex items-center justify-center rounded-full"
         style={{
-          width: 56,
-          height: 56,
-          background: "radial-gradient(circle at 35% 30%, rgba(255,214,107,0.5), rgba(255,122,45,0.22) 72%)",
+          width: 72,
+          height: 72,
+          background: "radial-gradient(circle at 35% 30%, rgba(255,214,107,0.22), rgba(255,122,45,0.06) 72%)",
           border: "1px solid var(--line)",
         }}
-      />
+      >
+        <svg width="30" height="34" viewBox="0 0 24 28" aria-hidden>
+          <motion.g
+            style={{ transformOrigin: "50% 100%" }}
+            animate={reduce ? undefined : { scaleY: [1, 1.05, 0.96, 1.03, 1], rotate: [0, -2, 1.5, -1, 0] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <path
+              d="M12 2C12 2 4 12 4 18C4 22.4 7.6 26 12 26C16.4 26 20 22.4 20 18C20 12 12 2 12 2Z"
+              fill="var(--ember)"
+              opacity={0.4}
+            />
+            <path
+              d="M12 12C12 12 8.5 17 8.5 20C8.5 22.2 10.1 24 12 24C13.9 24 15.5 22.2 15.5 20C15.5 17 12 12 12 12Z"
+              fill="var(--spark)"
+              opacity={0.7}
+            />
+          </motion.g>
+        </svg>
+      </div>
       <p className="mt-5 max-w-xs text-[15px]" style={{ color: "var(--ash)" }}>
         {d.emptyState}
       </p>
@@ -918,6 +949,17 @@ function Brasas({ value, reduce, accent = false }: { value: number; reduce: bool
       <Flame size={accent ? 16 : 14} strokeWidth={1.8} />
       <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[14px] font-medium" />
     </span>
+  );
+}
+
+function FooterStat({ label, value, reduce }: { label: string; value: number; reduce: boolean }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[18px] font-semibold" />
+      <span className="text-[12px]" style={{ color: "var(--ash-dim)" }}>
+        {label}
+      </span>
+    </div>
   );
 }
 

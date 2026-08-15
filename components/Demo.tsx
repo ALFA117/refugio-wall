@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Flame, Languages, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
+import { ArrowLeft, Flame, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
+import { LangToggle } from "./LangToggle";
 
 const FEED_GAIN = 12;
 
@@ -200,15 +201,7 @@ export function Demo() {
           <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
           {d.backToWall}
         </Link>
-        <button
-          onClick={() => setLang(lang === "en" ? "es" : "en")}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 font-mono-num text-[12px] tracking-wide transition-colors hover:text-[var(--warm-white)]"
-          style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
-          aria-label="Switch language"
-        >
-          <Languages size={13} style={{ color: "var(--violet)" }} />
-          {DICTS[lang].langLabel}
-        </button>
+        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
       </div>
 
       {/* mode="sync" (the default) — deliberately NOT "wait": gating the new phase's mount on
