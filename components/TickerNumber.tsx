@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, animate } from "framer-motion";
-
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+import { EASE_OUT } from "@/lib/motion";
 
 // Animated number: eases up from 0 on first mount (a classic counter), then — once settled —
 // any later change to `value` (e.g. from the 30s live poll picking up a new round) flips only

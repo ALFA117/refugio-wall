@@ -6,10 +6,10 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Flame, ArrowLeft, Share2, Crown, Languages, Check } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
+import { badgeForBrasas } from "@/lib/badges";
+import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
-
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 export function GuardianProfile({
   guardian,
@@ -104,7 +104,7 @@ export function GuardianProfile({
           </div>
 
           <div className="mt-6 flex items-center gap-3">
-            <Badge brasas={guardian.brasas} label={badgeLabel(guardian.brasas, d)} />
+            <Badge label={badgeForBrasas(guardian.brasas, d)} />
             {typeof guardian.gamesPlayed === "number" && (
               <span className="font-mono-num text-[13px]" style={{ color: "var(--ash)" }}>
                 {guardian.gamesPlayed} {d.profile.roundsPlayed}
@@ -169,14 +169,7 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
   );
 }
 
-function badgeLabel(brasas: number, d: (typeof DICTS)["en"]): { label: string; color: string } | null {
-  if (brasas >= 1000) return { label: d.badges.firekeeper, color: "var(--gold)" };
-  if (brasas >= 500) return { label: d.badges.ember, color: "var(--ember)" };
-  if (brasas >= 100) return { label: d.badges.kindling, color: "var(--violet)" };
-  return null;
-}
-
-function Badge({ label }: { brasas: number; label: { label: string; color: string } | null }) {
+function Badge({ label }: { label: { label: string; color: string } | null }) {
   if (!label) return null;
   return (
     <span

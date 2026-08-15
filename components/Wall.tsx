@@ -15,13 +15,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Share2, Check } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
+import { badgeForBrasas } from "@/lib/badges";
+import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
 
 // Deep-linkable profile URL for a guardian.
 export const guardianHref = (name: string) => `/guardians/${encodeURIComponent(name)}`;
 
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const MEDAL = ["var(--gold)", "var(--silver)", "var(--bronze)"];
 
 const container: Variants = {
@@ -796,14 +797,7 @@ function GuardianDot({ big = false }: { big?: boolean }) {
 }
 
 function Badge({ brasas, d }: { brasas: number; d: Dict }) {
-  const b =
-    brasas >= 1000
-      ? { label: d.badges.firekeeper, color: "var(--gold)" }
-      : brasas >= 500
-      ? { label: d.badges.ember, color: "var(--ember)" }
-      : brasas >= 100
-      ? { label: d.badges.kindling, color: "var(--violet)" }
-      : null;
+  const b = badgeForBrasas(brasas, d);
   if (!b) return null;
   return (
     <span

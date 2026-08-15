@@ -5,10 +5,10 @@ import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Flame, Languages, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
 import { DICTS, type Dict } from "@/lib/i18n";
+import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
 
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const FEED_GAIN = 12;
 
 type Difficulty = "easy" | "normal" | "hard";
