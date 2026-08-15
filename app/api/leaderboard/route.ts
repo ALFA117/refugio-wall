@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLeaderboard, kvSet, isKvConfigured, type Timeframe } from "@/lib/leaderboard";
+import { getLeaderboard, kvSet, isKvConfigured, recordSnapshot, type Timeframe } from "@/lib/leaderboard";
 import { isRateLimited } from "@/lib/rateLimit";
 import { IngestSchema } from "@/lib/ingestSchema";
 
@@ -48,5 +48,6 @@ export async function POST(req: Request) {
 
   const ok = await kvSet(parsed.data.entries);
   if (!ok) return NextResponse.json({ error: "kv write failed" }, { status: 502 });
+  await recordSnapshot(parsed.data.entries);
   return NextResponse.json({ ok: true, written: parsed.data.entries.length });
 }

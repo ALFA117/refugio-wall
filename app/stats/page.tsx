@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getLeaderboardBundle } from "@/lib/leaderboard";
+import { getLeaderboardBundle, getHistory } from "@/lib/leaderboard";
+import { topGainer } from "@/lib/history";
 import { StatsPage } from "@/components/StatsPage";
 
 export const dynamic = "force-dynamic";
@@ -14,5 +15,6 @@ export const metadata: Metadata = {
 
 export default async function StatsRoute() {
   const bundle = await getLeaderboardBundle();
-  return <StatsPage entries={bundle.frames.all} />;
+  const gainer = topGainer(await getHistory());
+  return <StatsPage entries={bundle.frames.all} gainer={gainer} />;
 }

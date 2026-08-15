@@ -5,9 +5,15 @@
 // based CSP would need middleware wiring that's a much bigger, riskier change to verify without
 // visual browser access in this environment. Still real protection — no third-party script
 // origins are allowed at all, framing is blocked, and default-src is locked to same-origin.
+//
+// 'unsafe-eval' is added ONLY in dev — Next's Fast Refresh/HMR runtime evaluates module code
+// via eval() in development, which a strict script-src blocks outright (caught live: dev mode
+// threw "Evaluating a string as JavaScript violates ... script-src" on every page). The
+// production bundle (what actually ships) doesn't use eval, so prod stays without it.
+const isDev = process.env.NODE_ENV !== "production";
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",

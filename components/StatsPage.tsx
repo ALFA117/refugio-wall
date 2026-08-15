@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Users, Flame, Swords, TrendingUp, Crown } from "lucide-react";
+import { ArrowLeft, Users, Flame, Swords, TrendingUp, Crown, Zap } from "lucide-react";
 import type { Guardian } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { BADGE_TIERS } from "@/lib/badges";
@@ -13,7 +13,7 @@ import { LangToggle } from "./LangToggle";
 import { AmbientEmbers, guardianHref } from "./Wall";
 import { TickerNumber } from "./TickerNumber";
 
-export function StatsPage({ entries }: { entries: Guardian[] }) {
+export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: { name: string; delta: number } | null }) {
   const reduce = useReducedMotion();
   const [lang, setLang] = useLang();
   const d = DICTS[lang];
@@ -65,6 +65,30 @@ export function StatsPage({ entries }: { entries: Guardian[] }) {
         <StatCard icon={<Swords size={18} />} label={d.statsPage.totalRounds} value={totalRounds} reduce={!!reduce} delay={0.1} />
         <StatCard icon={<TrendingUp size={18} />} label={d.statsPage.avgBrasas} value={avgBrasas} reduce={!!reduce} delay={0.15} />
       </div>
+
+      {gainer && (
+        <motion.div
+          className="card relative z-10 mt-4 flex items-center gap-3 p-4"
+          initial={reduce ? undefined : { opacity: 0, y: 12 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.18 }}
+        >
+          <Zap size={18} style={{ color: "var(--spark)" }} />
+          <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+            {d.statsPage.topGainer}
+          </span>
+          <Link
+            href={guardianHref(gainer.name)}
+            className="ml-auto flex items-center gap-1.5 text-[14px] font-medium transition-colors hover:text-[var(--spark)]"
+            style={{ color: "var(--warm-white)" }}
+          >
+            {gainer.name}
+            <span className="font-mono-num" style={{ color: "var(--spark)" }}>
+              +{gainer.delta}
+            </span>
+          </Link>
+        </motion.div>
+      )}
 
       {mostActive && (
         <motion.div

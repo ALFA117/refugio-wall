@@ -22,6 +22,10 @@ export type LeaderboardBundle = {
 };
 
 const KV_KEY = "refugio_leaderboard";
+const HISTORY_KEY = "refugio_leaderboard_history";
+const MAX_HISTORY_DAYS = 30;
+
+export type Snapshot = { date: string; entries: Guardian[] }; // date = YYYY-MM-DD, one per day
 
 const SAMPLE: Record<Timeframe, Guardian[]> = {
   all: [
@@ -99,6 +103,56 @@ export async function kvSet(entries: Guardian[]): Promise<boolean> {
 
 export function isKvConfigured(): boolean {
   return kvConfig() !== null;
+}
+
+async function kvGetHistory(): Promise<Snapshot[]> {
+  const cfg = kvConfig();
+  if (!cfg) return [];
+  try {
+    const res = await fetch(`${cfg.url}/get/${HISTORY_KEY}`, {
+      headers: { Authorization: `Bearer ${cfg.token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { result: string | null };
+    if (!data.result) return [];
+    const parsed = JSON.parse(data.result) as Snapshot[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function kvSetHistory(snapshots: Snapshot[]): Promise<boolean> {
+  const cfg = kvConfig();
+  if (!cfg) return false;
+  try {
+    const res = await fetch(`${cfg.url}/set/${HISTORY_KEY}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cfg.token}`, "Content-Type": "text/plain" },
+      body: JSON.stringify(snapshots),
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Called after a successful ingest write — appends (or replaces) today's snapshot and trims
+// to the last MAX_HISTORY_DAYS. One snapshot per calendar day, not per round, so a fire that
+// closes 10 rounds today still only produces one point on the trend line for today.
+export async function recordSnapshot(entries: Guardian[]): Promise<void> {
+  if (!isKvConfigured()) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const history = await kvGetHistory();
+  const withoutToday = history.filter((s) => s.date !== today);
+  const updated = [...withoutToday, { date: today, entries }].slice(-MAX_HISTORY_DAYS);
+  await kvSetHistory(updated);
+}
+
+export async function getHistory(): Promise<Snapshot[]> {
+  return kvGetHistory();
 }
 
 // Single-timeframe read (used by the API route). When live, every timeframe serves the

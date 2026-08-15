@@ -50,6 +50,7 @@ export type Dict = {
     totalRounds: string;
     avgBrasas: string;
     mostActive: string;
+    topGainer: string;
     badgeDistribution: string;
     back: string;
   };
@@ -71,6 +72,7 @@ export type Dict = {
     notFoundBody: string;
     didYouMean: string;
     viewFull: string;
+    trend: string;
     aheadOfPct: string;
   };
   demo: {
@@ -163,6 +165,7 @@ const en: Dict = {
     totalRounds: "Rounds played",
     avgBrasas: "Avg. embers / guardian",
     mostActive: "Most active",
+    topGainer: "Today's top gainer",
     badgeDistribution: "Badges earned",
     back: "Back to the Wall",
   },
@@ -183,6 +186,7 @@ const en: Dict = {
     notFound: "No such guardian",
     notFoundBody: "This name isn't on the Wall yet.",
     didYouMean: "Did you mean",
+    trend: "Last 30 days",
     viewFull: "View full profile",
     aheadOfPct: "Ahead of {pct}% of guardians",
   },
@@ -277,6 +281,7 @@ const es: Dict = {
     totalRounds: "Rondas jugadas",
     avgBrasas: "Brasas prom. / guardián",
     mostActive: "Más activo",
+    topGainer: "Mayor subida de hoy",
     badgeDistribution: "Insignias ganadas",
     back: "Volver al muro",
   },
@@ -297,6 +302,7 @@ const es: Dict = {
     notFound: "Guardián no encontrado",
     notFoundBody: "Este nombre aún no está en el muro.",
     didYouMean: "¿Quisiste decir",
+    trend: "Últimos 30 días",
     viewFull: "Ver perfil completo",
     aheadOfPct: "Por delante del {pct}% de guardianes",
   },

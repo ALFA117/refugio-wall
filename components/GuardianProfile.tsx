@@ -11,6 +11,7 @@ import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
 import { LangToggle } from "./LangToggle";
+import { Sparkline } from "./Sparkline";
 
 export function GuardianProfile({
   guardian,
@@ -18,6 +19,7 @@ export function GuardianProfile({
   rank,
   total,
   suggestion,
+  trend,
 }: {
   guardian: Guardian | null;
   name: string;
@@ -25,6 +27,7 @@ export function GuardianProfile({
   total: number;
   source: Source;
   suggestion?: string | null;
+  trend?: number[];
 }) {
   const reduce = useReducedMotion();
   const [lang, setLang] = useLang();
@@ -125,6 +128,15 @@ export function GuardianProfile({
               </span>
             )}
           </div>
+
+          {trend && trend.length >= 2 && (
+            <div className="mt-5 flex flex-col items-center gap-1.5">
+              <Sparkline values={trend} />
+              <span className="text-[11px]" style={{ color: "var(--ash-dim)" }}>
+                {d.profile.trend}
+              </span>
+            </div>
+          )}
 
           <div className="mt-10 flex items-center gap-3">
             <ShareButton d={d} />
