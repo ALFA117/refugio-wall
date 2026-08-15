@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import {
   motion,
   AnimatePresence,
+  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type Variants,
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Share2, Check } from "lucide-react";
+import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, ChevronUp, Share2, Check } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
@@ -67,6 +69,14 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   // the data on screen is still the last good snapshot, just aging.
   const [staleConnection, setStaleConnection] = useState(false);
   const failCount = useRef(0);
+  // Rank-change indicators: diff each poll's order against the previous one so a row can show
+  // "moved up 2" / "moved down 1" instead of just silently re-sorting via layout animation.
+  const prevRankRef = useRef<Record<string, number> | null>(null);
+  const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
+  useEffect(() => {
+    prevRankRef.current = null;
+    setRankDelta({});
+  }, [tf]);
   useEffect(() => {
     if (bundle.source !== "live") return;
     const id = setInterval(async () => {
@@ -77,6 +87,21 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         setFrames((prev) => ({ ...prev, [tf]: data.entries }));
         failCount.current = 0;
         setStaleConnection(false);
+
+        const newRanks: Record<string, number> = {};
+        data.entries.forEach((e, i) => { newRanks[e.displayName] = i; });
+        if (prevRankRef.current) {
+          const deltas: Record<string, number> = {};
+          for (const name in newRanks) {
+            const prev = prevRankRef.current[name];
+            if (prev !== undefined && prev !== newRanks[name]) deltas[name] = prev - newRanks[name];
+          }
+          if (Object.keys(deltas).length) {
+            setRankDelta(deltas);
+            setTimeout(() => setRankDelta({}), 6000);
+          }
+        }
+        prevRankRef.current = newRanks;
       } catch {
         failCount.current += 1;
         if (failCount.current >= 2) setStaleConnection(true);
@@ -293,8 +318,11 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                     className="flex min-w-0 flex-1 items-center gap-4 px-4 py-3.5"
                     style={{ color: "inherit", textDecoration: "none" }}
                   >
-                    <span className="font-mono-num w-7 shrink-0 text-center text-sm" style={{ color: "var(--ash-dim)" }}>
-                      {rank + 1}
+                    <span className="flex w-7 shrink-0 items-center justify-center gap-0.5">
+                      <span className="font-mono-num text-center text-sm" style={{ color: "var(--ash-dim)" }}>
+                        {rank + 1}
+                      </span>
+                      <RankChangeArrow delta={rankDelta[g.displayName]} />
                     </span>
                     <GuardianDot />
                     <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -673,10 +701,36 @@ function PodiumCard({
   newRecord: boolean;
 }) {
   const isFirst = rank === 0;
+  // Every rank gets a shadow tinted to its medal color, not just #1 — subtle depth cue that
+  // reads as "this card sits at a different height" instead of one lit card and two flat ones.
+  const glow =
+    rank === 0
+      ? "0 26px 60px -32px rgba(255,122,45,0.75)"
+      : rank === 1
+      ? "0 18px 42px -28px rgba(200,205,220,0.4)"
+      : "0 18px 42px -28px rgba(205,145,95,0.35)";
+
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+  const tiltX = useSpring(rotateX, { stiffness: 300, damping: 22 });
+  const tiltY = useSpring(rotateY, { stiffness: 300, damping: 22 });
+  function handleMove(e: MouseEvent<HTMLDivElement>) {
+    if (reduce) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    rotateY.set(((e.clientX - rect.left) / rect.width - 0.5) * 8);
+    rotateX.set(-((e.clientY - rect.top) / rect.height - 0.5) * 8);
+  }
+  function handleLeave() {
+    rotateX.set(0);
+    rotateY.set(0);
+  }
+
   return (
     <motion.div
       variants={reduce ? undefined : podiumItem}
       whileHover={reduce ? undefined : { y: -5 }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
       transition={{ type: "spring", stiffness: 400, damping: 26 }}
       className="flex flex-col items-center rounded-2xl border px-2 pb-4"
       style={{
@@ -686,7 +740,10 @@ function PodiumCard({
           : "linear-gradient(180deg, var(--surface), var(--ground-2))",
         paddingTop: isFirst ? 20 : 34,
         marginBottom: isFirst ? 10 : 0,
-        boxShadow: isFirst ? "0 26px 60px -32px rgba(255,122,45,0.75)" : "none",
+        boxShadow: glow,
+        rotateX: reduce ? 0 : tiltX,
+        rotateY: reduce ? 0 : tiltY,
+        transformPerspective: 700,
       }}
     >
       <Link
@@ -739,40 +796,86 @@ function PodiumCard({
   );
 }
 
+// Shows briefly after a live poll reorders the list — "this row moved" instead of a row just
+// silently sliding to a new spot via layout animation with no explanation why.
+function RankChangeArrow({ delta }: { delta?: number }) {
+  if (!delta) return null;
+  const up = delta > 0;
+  return (
+    <motion.span
+      initial={{ opacity: 0, y: up ? 3 : -3 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      aria-hidden
+      style={{ color: up ? "var(--spark)" : "#ff8a7a" }}
+    >
+      {up ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+    </motion.span>
+  );
+}
+
 /* ------------------------------------------------------------- How it works */
 
+// A connected, numbered sequence instead of a flat card grid — the 7 systems are steps in one
+// chain (fogata → seats → minigame → brasas → HUD → invites → anti-cheat), so the layout now
+// says that: a spine that fills in as you scroll past it, with each system as a lit node on it.
 function HowItWorks({ d, reduce }: { d: Dict; reduce: boolean }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: trackRef, offset: ["start 0.85", "end 0.6"] });
+  const fill = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
   return (
     <section className="relative z-10 mt-20">
-      <div className="mb-6 text-center">
+      <div className="mb-8 text-center">
         <div className="eyebrow">{d.howEyebrow}</div>
         <h2 className="font-serif-display mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
           {d.howTitle}
         </h2>
       </div>
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        {d.systems.map((s, i) => (
+      <div ref={trackRef} className="relative">
+        <div
+          aria-hidden
+          className="absolute left-[19px] top-2 bottom-2 w-px sm:left-5"
+          style={{ background: "var(--line)" }}
+        />
+        {!reduce && (
           <motion.div
-            key={s.name}
-            className="card flex items-start gap-3 p-4"
-            initial={reduce ? undefined : { opacity: 0, y: 16 }}
-            whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.5, ease: EASE_OUT, delay: Math.min(i * 0.05, 0.3) }}
-          >
-            <span className="font-mono-num mt-0.5 text-[13px]" style={{ color: "var(--ember)" }}>
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div>
-              <h3 className="text-[15px] font-semibold" style={{ color: "var(--warm-white)" }}>
-                {s.name}
-              </h3>
-              <p className="mt-1 text-[13.5px]" style={{ color: "var(--ash)" }}>
-                {s.blurb}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+            aria-hidden
+            className="absolute left-[19px] top-2 w-px sm:left-5"
+            style={{
+              height: fill,
+              background: "linear-gradient(180deg, var(--ember), var(--violet))",
+              boxShadow: "0 0 12px rgba(255,150,60,0.5)",
+            }}
+          />
+        )}
+        <div className="flex flex-col gap-4">
+          {d.systems.map((s, i) => (
+            <motion.div
+              key={s.name}
+              className="relative flex items-start gap-4"
+              initial={reduce ? undefined : { opacity: 0, x: -12 }}
+              whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, ease: EASE_OUT, delay: Math.min(i * 0.04, 0.24) }}
+            >
+              <span
+                className="font-mono-num relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[13px]"
+                style={{ background: "var(--ground)", borderColor: "var(--line-strong)", color: "var(--ember)" }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="card flex-1 p-4">
+                <h3 className="text-[15px] font-semibold" style={{ color: "var(--warm-white)" }}>
+                  {s.name}
+                </h3>
+                <p className="mt-1 text-[13.5px]" style={{ color: "var(--ash)" }}>
+                  {s.blurb}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
