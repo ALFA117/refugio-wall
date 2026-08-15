@@ -12,6 +12,9 @@ Built with **Next.js 14 (App Router)**, **Framer Motion**, and **Tailwind**, in 
 - Live leaderboard with All-time / This week / Today filters (synced to the URL — `?tf=week` is itself shareable)
 - Search with highlight, milestone badges, a sticky "leading" bar once the podium scrolls away
 - Deep-linkable guardian profiles at `/guardians/[name]`, each with a personalized Open Graph share card, a Web Share button, and rank/streak stats
+- `/guardians` — the full roster (the Wall itself only ever shows the top 10)
+- `/stats` — aggregate community numbers (total guardians, embers earned, rounds played, badge distribution)
+- `/compare` — pick any two guardians and see who's ahead
 - A hidden easter egg (5 rapid taps on the language toggle)
 - Installable as a PWA ("Add to Home Screen")
 
@@ -49,6 +52,16 @@ npm run dev
 1. In the Vercel dashboard: **Storage → Create Database → KV (Upstash for Redis)**, connect it to the `refugio` project. Vercel adds `KV_REST_API_URL` / `KV_REST_API_TOKEN` automatically.
 2. Add one env var yourself: `REFUGIO_INGEST_SECRET` (any long random string).
 3. In the Refugio scene deploy, set EnvVars `COMPANION_URL=https://<site>/api/leaderboard` and `COMPANION_SECRET` (same value as `REFUGIO_INGEST_SECRET`). The server pushes on every round close.
+
+## Testing
+
+```bash
+npm test          # Vitest — pure logic: badge tiers, fuzzy-name matching, i18n key parity
+npm run build      # required once before test:e2e (it starts the built app, not the dev server)
+npm run test:e2e   # Playwright — smoke tests + an automated axe-core a11y pass on every page
+```
+
+The E2E suite runs against a production build (`next start`) on port 3100, not `next dev`, and serially (one worker) — a single Next.js server handling a dozen simultaneous first-navigations from parallel browser contexts turned out to be the bottleneck, not anything worth testing for.
 
 ## Deploy
 

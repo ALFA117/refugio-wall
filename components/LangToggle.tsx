@@ -28,13 +28,13 @@ export function LangToggle({ lang, onClick, reduce }: { lang: Lang; onClick: () 
         />
         <span
           className="font-mono-num relative z-10 flex w-1/2 items-center justify-center text-[10px] tracking-wide transition-colors"
-          style={{ color: lang === "en" ? "#fff" : "var(--ash-dim)" }}
+          style={{ color: lang === "en" ? "var(--ground)" : "var(--ash-dim)" }}
         >
           EN
         </span>
         <span
           className="font-mono-num relative z-10 flex w-1/2 items-center justify-center text-[10px] tracking-wide transition-colors"
-          style={{ color: lang === "es" ? "#fff" : "var(--ash-dim)" }}
+          style={{ color: lang === "es" ? "var(--ground)" : "var(--ash-dim)" }}
         >
           ES
         </span>
