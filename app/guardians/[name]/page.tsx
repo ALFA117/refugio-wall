@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getLeaderboardBundle } from "@/lib/leaderboard";
+import { closestName } from "@/lib/similar";
 import { GuardianProfile } from "@/components/GuardianProfile";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function GuardianPage({ params }: { params: { name: string 
   const entries = bundle.frames.all;
   const idx = entries.findIndex((e) => e.displayName.toLowerCase() === name.toLowerCase());
   const guardian = idx >= 0 ? entries[idx] : null;
+  const suggestion = guardian ? null : closestName(name, entries.map((e) => e.displayName));
 
   // Generic WebPage schema — deliberately not Person/ProfilePage, since this represents a
   // game handle's stats, not a verified real-world identity.
@@ -49,6 +51,7 @@ export default async function GuardianPage({ params }: { params: { name: string 
         rank={idx}
         total={entries.length}
         source={bundle.source}
+        suggestion={suggestion}
       />
     </>
   );

@@ -17,12 +17,14 @@ export function GuardianProfile({
   name,
   rank,
   total,
+  suggestion,
 }: {
   guardian: Guardian | null;
   name: string;
   rank: number; // 0-based, -1 if not found
   total: number;
   source: Source;
+  suggestion?: string | null;
 }) {
   const reduce = useReducedMotion();
   const [lang, setLang] = useLang();
@@ -148,6 +150,15 @@ export function GuardianProfile({
           <p className="mt-2 max-w-xs text-[14px]" style={{ color: "var(--ash)" }}>
             “{name}” — {d.profile.notFoundBody}
           </p>
+          {suggestion && (
+            <p className="mt-4 text-[14px]" style={{ color: "var(--ash-dim)" }}>
+              {d.profile.didYouMean}{" "}
+              <Link href={`/guardians/${encodeURIComponent(suggestion)}`} className="font-medium transition-colors hover:text-[var(--spark)]" style={{ color: "var(--amber)" }}>
+                {suggestion}
+              </Link>
+              ?
+            </p>
+          )}
         </section>
       )}
 

@@ -69,6 +69,7 @@ export type Dict = {
     back: string;
     notFound: string;
     notFoundBody: string;
+    didYouMean: string;
     viewFull: string;
     aheadOfPct: string;
   };
@@ -181,6 +182,7 @@ const en: Dict = {
     back: "Back to the Wall",
     notFound: "No such guardian",
     notFoundBody: "This name isn't on the Wall yet.",
+    didYouMean: "Did you mean",
     viewFull: "View full profile",
     aheadOfPct: "Ahead of {pct}% of guardians",
   },
@@ -294,6 +296,7 @@ const es: Dict = {
     back: "Volver al muro",
     notFound: "Guardián no encontrado",
     notFoundBody: "Este nombre aún no está en el muro.",
+    didYouMean: "¿Quisiste decir",
     viewFull: "Ver perfil completo",
     aheadOfPct: "Por delante del {pct}% de guardianes",
   },

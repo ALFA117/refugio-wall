@@ -250,7 +250,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       {/* Controls: filters + search */}
       <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Filters d={d} tf={tf} setTf={setTf} reduce={!!reduce} />
-        <SearchBox d={d} q={q} setQ={setQ} />
+        <SearchBox d={d} q={q} setQ={setQ} entries={entries} />
       </div>
 
       {empty ? (
@@ -708,22 +708,58 @@ function Filters({
   );
 }
 
-function SearchBox({ d, q, setQ }: { d: Dict; q: string; setQ: (s: string) => void }) {
+function SearchBox({ d, q, setQ, entries }: { d: Dict; q: string; setQ: (s: string) => void; entries: Guardian[] }) {
+  const router = useRouter();
+  const [focused, setFocused] = useState(false);
+  const query = q.trim().toLowerCase();
+  const suggestions = query ? entries.filter((e) => e.displayName.toLowerCase().includes(query)).slice(0, 5) : [];
+
   return (
-    <label
-      className="inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5"
-      style={{ borderColor: "var(--line)", background: "var(--surface)" }}
-    >
-      <Search size={15} style={{ color: "var(--ash-dim)" }} />
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder={d.searchPlaceholder}
-        className="w-40 bg-transparent text-[14px] outline-none placeholder:text-[var(--ash-dim)]"
-        style={{ color: "var(--warm-white)" }}
-        aria-label={d.searchPlaceholder}
-      />
-    </label>
+    <div className="relative">
+      <label
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5"
+        style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+      >
+        <Search size={15} style={{ color: "var(--ash-dim)" }} />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setTimeout(() => setFocused(false), 120)}
+          placeholder={d.searchPlaceholder}
+          className="w-40 bg-transparent text-[14px] outline-none placeholder:text-[var(--ash-dim)]"
+          style={{ color: "var(--warm-white)" }}
+          aria-label={d.searchPlaceholder}
+        />
+      </label>
+      <AnimatePresence>
+        {focused && suggestions.length > 0 && (
+          <motion.ul
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border"
+            style={{ borderColor: "var(--line-strong)", background: "var(--ground-2)" }}
+          >
+            {suggestions.map((s) => (
+              <li key={s.displayName}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => router.push(guardianHref(s.displayName))}
+                  className="flex min-h-11 w-full items-center gap-2 px-3.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                  style={{ color: "var(--warm-white)" }}
+                >
+                  <GuardianDot />
+                  <span className="truncate">{s.displayName}</span>
+                </button>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
