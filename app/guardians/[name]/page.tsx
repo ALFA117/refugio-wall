@@ -6,10 +6,17 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { name: string } }): Promise<Metadata> {
   const name = decodeURIComponent(params.name);
+  const title = `${name} · Wall of Guardians`;
+  const description = `${name} on the Refugio Wall of Guardians — embers earned keeping the fire alive.`;
   return {
-    title: `${name} · Wall of Guardians`,
-    description: `${name} on the Refugio Wall of Guardians — embers earned keeping the fire alive.`,
+    title,
+    description,
     alternates: { canonical: `/guardians/${encodeURIComponent(name)}` },
+    // Explicit per-page openGraph/twitter — otherwise Next inherits the root layout's whole
+    // object (generic "Wall of Guardians" title) even though the dedicated OG *image* for
+    // this route (opengraph-image.tsx) is correctly auto-detected and personalized.
+    openGraph: { title, description, type: "profile" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

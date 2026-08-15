@@ -62,16 +62,23 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   // Auto-refresh: when the data is real (KV), poll the active timeframe every 30s so
   // the Wall stays live without a reload. The layout animation handles any reordering.
   const [frames, setFrames] = useState(bundle.frames);
+  // Surfaces honestly once refreshes keep failing, instead of silently going stale forever —
+  // the data on screen is still the last good snapshot, just aging.
+  const [staleConnection, setStaleConnection] = useState(false);
+  const failCount = useRef(0);
   useEffect(() => {
     if (bundle.source !== "live") return;
     const id = setInterval(async () => {
       try {
         const res = await fetch(`/api/leaderboard?timeframe=${tf}`, { cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as { entries: Guardian[] };
         setFrames((prev) => ({ ...prev, [tf]: data.entries }));
+        failCount.current = 0;
+        setStaleConnection(false);
       } catch {
-        /* keep last good data */
+        failCount.current += 1;
+        if (failCount.current >= 2) setStaleConnection(true);
       }
     }, 30000);
     return () => clearInterval(id);
@@ -178,7 +185,18 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
       >
-        <div className="eyebrow">{bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}</div>
+        <div className="eyebrow flex items-center justify-center gap-2">
+          {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
+          {staleConnection && (
+            <span
+              className="font-mono-num normal-case tracking-normal"
+              style={{ color: "var(--ash-dim)" }}
+              role="status"
+            >
+              · {d.reconnecting}
+            </span>
+          )}
+        </div>
         <h1
           className="font-serif-display mx-auto mt-4 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
           style={{ textWrap: "balance" }}
@@ -889,12 +907,23 @@ export function AmbientEmbers({ reduce }: { reduce: boolean }) {
       }
       ctx.globalAlpha = 1;
       if (parts.length > 180) parts.splice(0, parts.length - 180);
+      // Stop scheduling while the tab is hidden — a background tab burning CPU/battery on a
+      // purely decorative animation nobody can see is wasted work, browser throttling aside.
+      if (document.hidden) {
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(frame);
     };
+    const resume = () => {
+      if (!document.hidden && !raf) frame();
+    };
+    document.addEventListener("visibilitychange", resume);
     frame();
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", size);
+      document.removeEventListener("visibilitychange", resume);
     };
   }, [reduce]);
 

@@ -355,7 +355,15 @@ export function Demo() {
                     {Math.round(health)}%
                   </span>
                 </div>
-                <div className="mt-1.5 h-2.5 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+                <div
+                  className="mt-1.5 h-2.5 overflow-hidden rounded-full"
+                  style={{ background: "var(--surface-2)" }}
+                  role="progressbar"
+                  aria-label={d.fireHealth}
+                  aria-valuenow={Math.round(health)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
                   <motion.div
                     className="h-full rounded-full"
                     style={{ background: healthColor, boxShadow: `0 0 10px ${healthColor}` }}
@@ -721,12 +729,16 @@ function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: str
     <div
       className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5"
       style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+      role="status"
+      aria-label={`${label}: ${value}`}
     >
-      <span style={{ color }}>{icon}</span>
-      <span className="font-mono-num text-[11px] uppercase tracking-wider" style={{ color: "var(--ash-dim)" }}>
+      <span aria-hidden style={{ color }}>
+        {icon}
+      </span>
+      <span aria-hidden className="font-mono-num text-[11px] uppercase tracking-wider" style={{ color: "var(--ash-dim)" }}>
         {label}
       </span>
-      <span className="font-mono-num text-[13px] font-semibold" style={{ color }}>
+      <span aria-hidden className="font-mono-num text-[13px] font-semibold" style={{ color }}>
         {value}
       </span>
     </div>
@@ -1008,12 +1020,21 @@ function FireCanvas({
       ctx.globalAlpha = 1;
       if (particles.length > 300) particles.splice(0, particles.length - 300);
 
+      if (document.hidden) {
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(frame);
     };
+    const resume = () => {
+      if (!document.hidden && !raf) frame();
+    };
+    document.addEventListener("visibilitychange", resume);
     frame();
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", size);
+      document.removeEventListener("visibilitychange", resume);
     };
   }, [reduce, idle]);
 
