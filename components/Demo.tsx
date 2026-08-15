@@ -29,6 +29,18 @@ const DIFFICULTY: Record<Difficulty, { ttl: number; spawnBase: number; decay: nu
   hard: { ttl: 1100, spawnBase: 1150, decay: 2.1, miss: 16, maxActive: 3 },
 };
 
+// Best-effort haptic feedback (Android Chrome; silently no-ops everywhere else, including
+// iOS Safari which never implemented the Vibration API).
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 // A pure-web, no-install taste of the real mechanic, built as an actual small game (start
 // screen → play) rather than a passive readout — closer to what the real feed-the-fire loop
 // feels like, in under a minute, with nothing to install. Not the real multiplayer game; the
@@ -46,6 +58,34 @@ export function Demo() {
   const [toast, setToast] = useState<{ text: string; good: boolean } | null>(null);
   const [streak, setStreak] = useState(0);
   const [best, setBest] = useState(0);
+
+  // Remember the player's difficulty and best-ever streak across visits. Read once on mount
+  // (client-only — localStorage doesn't exist during SSR) rather than lazy useState
+  // initializers, which would run during server render and throw.
+  useEffect(() => {
+    try {
+      const savedDiff = window.localStorage.getItem("refugio-demo-difficulty");
+      if (savedDiff === "easy" || savedDiff === "normal" || savedDiff === "hard") setDifficulty(savedDiff);
+      const savedBest = Number(window.localStorage.getItem("refugio-demo-best"));
+      if (Number.isFinite(savedBest) && savedBest > 0) setBest(savedBest);
+    } catch {
+      /* localStorage unavailable (private mode, etc.) — just skip persistence */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("refugio-demo-difficulty", difficulty);
+    } catch {
+      /* ignore */
+    }
+  }, [difficulty]);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("refugio-demo-best", String(best));
+    } catch {
+      /* ignore */
+    }
+  }, [best]);
 
   const nextId = useRef(1);
   const woodTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
@@ -90,10 +130,12 @@ export function Demo() {
       woodTimers.current.clear();
       setWood([]);
       setPhase("gameover");
+      vibrate([40, 60, 90]);
     }
   }, [phase, health]);
 
   const [milestone, setMilestone] = useState(0); // bumps to retrigger the celebration burst
+  const [missFlash, setMissFlash] = useState(0); // bumps to retrigger the miss-flash overlay
 
   function resolveWood(id: number, fed: boolean) {
     setWood((current) => current.filter((w) => w.id !== id));
@@ -105,6 +147,8 @@ export function Demo() {
     setHealth((h) => Math.max(0, Math.min(100, h + (fed ? FEED_GAIN : -cfg.miss))));
     setToast({ text: fed ? d.fedToast : d.missedToast, good: fed });
     setTimeout(() => setToast(null), 900);
+    vibrate(fed ? 12 : [15, 40, 15]);
+    if (!fed) setMissFlash((m) => m + 1);
     setStreak((s) => {
       const next = fed ? s + 1 : 0;
       setBest((b) => Math.max(b, next));
@@ -201,6 +245,7 @@ export function Demo() {
               }}
             >
               <MilestoneBurst trigger={milestone} reduce={!!reduce} />
+              <MissFlash trigger={missFlash} reduce={!!reduce} />
               <div className="relative">
                 <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
                 <GuardianRing guardians={guardians} reduce={!!reduce} />
@@ -268,6 +313,11 @@ export function Demo() {
                       </motion.span>
                     )}
                   </AnimatePresence>
+                  {/* Screen readers don't get the visual toast's meaning for free — announce
+                      it via a visually-hidden live region instead of relying on sight alone. */}
+                  <span role="status" aria-live="polite" className="sr-only">
+                    {toast?.text ?? ""}
+                  </span>
                 </div>
               </div>
 
@@ -591,6 +641,24 @@ function ShareBestButton({ d, best }: { d: Dict["demo"]; best: number }) {
 }
 
 /* ---------------------------------------------------------- Milestone burst */
+
+// A quick red flash across the whole card on a miss — sharper, more immediate feedback than
+// the toast alone. Skipped entirely under reduced-motion (a flash is squarely decorative).
+function MissFlash({ trigger, reduce }: { trigger: number; reduce: boolean }) {
+  if (trigger === 0 || reduce) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10">
+      <motion.div
+        key={trigger}
+        className="absolute inset-0"
+        style={{ background: "radial-gradient(circle at 50% 70%, rgba(255,60,50,0.35), transparent 70%)" }}
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      />
+    </div>
+  );
+}
 
 // Every 5th consecutive feed triggers a small celebration — spark burst from the card center.
 // `trigger` is a counter that increments on each milestone; keying the burst on it re-fires it.

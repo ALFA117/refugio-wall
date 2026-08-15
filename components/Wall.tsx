@@ -11,7 +11,8 @@ import {
   type Variants,
 } from "framer-motion";
 import Link from "next/link";
-import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Play } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Flame, Crown, ArrowUpRight, Search, Languages, ChevronDown, Play, Share2, Check } from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { useLang } from "./useLang";
@@ -39,9 +40,24 @@ const podiumItem: Variants = {
 export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const reduce = useReducedMotion();
   const [lang, setLang] = useLang();
-  const [tf, setTf] = useState<Timeframe>("all");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [tf, setTf] = useState<Timeframe>(() => {
+    const p = searchParams.get("tf");
+    return p === "week" || p === "today" ? p : "all";
+  });
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Keep the filter in the URL (shareable as ?tf=week) without a full navigation/reload.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (tf === "all") params.delete("tf");
+    else params.set("tf", tf);
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tf]);
 
   // Auto-refresh: when the data is real (KV), poll the active timeframe every 30s so
   // the Wall stays live without a reload. The layout animation handles any reordering.
@@ -350,6 +366,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           <FooterLink href="#" label={d.cta.scene} />
           <FooterLink href="/demo" label={d.cta.demo} />
           <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
+          <WallShareButton d={d} />
         </div>
         <div className="mt-2 font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
           REFUGIO · 🔥 · BUILT ON DECENTRALAND
@@ -778,7 +795,7 @@ function FooterLink({ href, label, external = false }: { href: string; label: st
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className="group inline-flex items-center gap-1.5 rounded-lg border px-4 py-2.5 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
+      className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
       {label}
@@ -788,6 +805,44 @@ function FooterLink({ href, label, external = false }: { href: string; label: st
         style={{ color: "var(--amber)" }}
       />
     </a>
+  );
+}
+
+function WallShareButton({ d }: { d: Dict }) {
+  const [copied, setCopied] = useState(false);
+  async function share() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const title = `${d.titlePre} ${d.titleEm}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        /* fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={share}
+      className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
+      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+    >
+      {copied ? d.cta.copied : d.cta.share}
+      {copied ? (
+        <Check size={14} style={{ color: "var(--gold)" }} />
+      ) : (
+        <Share2 size={14} className="transition-transform group-hover:scale-110" style={{ color: "var(--amber)" }} />
+      )}
+    </button>
   );
 }
 
