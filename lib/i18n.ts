@@ -65,6 +65,8 @@ export type Dict = {
     share: string;
     copied: string;
     shareText: string;
+    guardiansLabel: string;
+    seatsFull: string;
   };
 };
 
@@ -143,6 +145,8 @@ const en: Dict = {
     share: "Share",
     copied: "Link copied",
     shareText: "I kept Refugio's fire alive for a streak of",
+    guardiansLabel: "guardians",
+    seatsFull: "Seats full",
   },
 };
 
@@ -221,6 +225,8 @@ const es: Dict = {
     share: "Compartir",
     copied: "Enlace copiado",
     shareText: "Mantuve el fuego de Refugio vivo con una racha de",
+    guardiansLabel: "guardianes",
+    seatsFull: "Asientos llenos",
   },
 };
 

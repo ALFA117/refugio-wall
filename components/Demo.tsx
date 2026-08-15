@@ -15,10 +15,18 @@ type Difficulty = "easy" | "normal" | "hard";
 type Wood = { id: number; slot: number };
 type Phase = "start" | "playing" | "gameover";
 
-const DIFFICULTY: Record<Difficulty, { ttl: number; spawnBase: number; decay: number; miss: number }> = {
-  easy: { ttl: 2600, spawnBase: 3000, decay: 0.7, miss: 6 },
-  normal: { ttl: 2000, spawnBase: 2400, decay: 1, miss: 9 },
-  hard: { ttl: 1350, spawnBase: 1700, decay: 1.6, miss: 13 },
+// 8 seats, matching the real scene's N_ASIENTOS — the demo's guardian count is capped at 8
+// for the same reason, so the intensity formula (0.3 + guardians*0.08) tops out at the same
+// 0.94-ish ceiling the real fogataSystem reaches at a full circle.
+const SEAT_COUNT = 8;
+const WOOD_SLOTS = 5;
+
+// `maxActive` is the real difficulty lever beyond timing: Hard has up to 3 pieces of wood
+// alight at once, forcing you to triage instead of handling one at a time.
+const DIFFICULTY: Record<Difficulty, { ttl: number; spawnBase: number; decay: number; miss: number; maxActive: number }> = {
+  easy: { ttl: 2500, spawnBase: 2600, decay: 0.8, miss: 7, maxActive: 1 },
+  normal: { ttl: 1750, spawnBase: 1900, decay: 1.3, miss: 11, maxActive: 2 },
+  hard: { ttl: 1100, spawnBase: 1150, decay: 2.1, miss: 16, maxActive: 3 },
 };
 
 // A pure-web, no-install taste of the real mechanic, built as an actual small game (start
@@ -34,33 +42,38 @@ export function Demo() {
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [guardians, setGuardians] = useState(1);
   const [health, setHealth] = useState(70);
-  const [wood, setWood] = useState<Wood | null>(null);
+  const [wood, setWood] = useState<Wood[]>([]);
   const [toast, setToast] = useState<{ text: string; good: boolean } | null>(null);
   const [streak, setStreak] = useState(0);
   const [best, setBest] = useState(0);
 
   const nextId = useRef(1);
-  const woodTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const woodTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const resolveWoodRef = useRef<(id: number, fed: boolean) => void>(() => {});
 
   const cfg = DIFFICULTY[difficulty];
   const intensity = Math.min(1.5, 0.3 + guardians * 0.08);
 
+  // Spawns up to `cfg.maxActive` pieces of wood at once — on Hard you're triaging 3 fires at
+  // the same time, not handling one at a leisurely pace.
   useEffect(() => {
     if (phase !== "playing") return;
     const spawn = () => {
       setWood((current) => {
-        if (current) return current;
-        const slot = Math.floor(Math.random() * 5);
+        if (current.length >= cfg.maxActive) return current;
+        const used = new Set(current.map((w) => w.slot));
+        const free = Array.from({ length: WOOD_SLOTS }, (_, i) => i).filter((s) => !used.has(s));
+        if (free.length === 0) return current;
+        const slot = free[Math.floor(Math.random() * free.length)];
         const id = nextId.current++;
-        woodTimer.current = setTimeout(() => resolveWoodRef.current(id, false), cfg.ttl);
-        return { id, slot };
+        woodTimers.current.set(id, setTimeout(() => resolveWoodRef.current(id, false), cfg.ttl));
+        return [...current, { id, slot }];
       });
     };
-    const delay = Math.max(900, cfg.spawnBase - guardians * 110);
+    const delay = Math.max(500, cfg.spawnBase - guardians * 90);
     const id = setInterval(spawn, delay);
     return () => clearInterval(id);
-  }, [phase, guardians, cfg.ttl, cfg.spawnBase]);
+  }, [phase, guardians, cfg.ttl, cfg.spawnBase, cfg.maxActive]);
 
   useEffect(() => {
     if (phase !== "playing") return;
@@ -73,8 +86,9 @@ export function Demo() {
   // The fire went out — a clear end to the loop instead of an open-ended sandbox.
   useEffect(() => {
     if (phase === "playing" && health <= 0) {
-      if (woodTimer.current) clearTimeout(woodTimer.current);
-      setWood(null);
+      woodTimers.current.forEach(clearTimeout);
+      woodTimers.current.clear();
+      setWood([]);
       setPhase("gameover");
     }
   }, [phase, health]);
@@ -82,8 +96,12 @@ export function Demo() {
   const [milestone, setMilestone] = useState(0); // bumps to retrigger the celebration burst
 
   function resolveWood(id: number, fed: boolean) {
-    setWood((current) => (current && current.id === id ? null : current));
-    if (woodTimer.current) clearTimeout(woodTimer.current);
+    setWood((current) => current.filter((w) => w.id !== id));
+    const t = woodTimers.current.get(id);
+    if (t) {
+      clearTimeout(t);
+      woodTimers.current.delete(id);
+    }
     setHealth((h) => Math.max(0, Math.min(100, h + (fed ? FEED_GAIN : -cfg.miss))));
     setToast({ text: fed ? d.fedToast : d.missedToast, good: fed });
     setTimeout(() => setToast(null), 900);
@@ -99,7 +117,9 @@ export function Demo() {
   function startGame() {
     setGuardians(1);
     setHealth(70);
-    setWood(null);
+    woodTimers.current.forEach(clearTimeout);
+    woodTimers.current.clear();
+    setWood([]);
     setStreak(0);
     setPhase("playing");
   }
@@ -183,15 +203,18 @@ export function Demo() {
               <MilestoneBurst trigger={milestone} reduce={!!reduce} />
               <div className="relative">
                 <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
+                <GuardianRing guardians={guardians} reduce={!!reduce} />
 
                 <div className="pointer-events-none absolute inset-x-0 bottom-[50px] flex justify-center gap-6 sm:bottom-[60px] sm:gap-9">
-                  {Array.from({ length: 5 }).map((_, slot) => (
+                  {Array.from({ length: WOOD_SLOTS }).map((_, slot) => {
+                    const w = wood.find((piece) => piece.slot === slot);
+                    return (
                     <div key={slot} className="pointer-events-auto flex h-12 w-12 items-center justify-center">
                       <AnimatePresence>
-                        {wood?.slot === slot && (
+                        {w && (
                           <motion.button
                             type="button"
-                            onClick={() => resolveWood(wood.id, true)}
+                            onClick={() => resolveWood(w.id, true)}
                             aria-label={d.feedPrompt}
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -217,7 +240,8 @@ export function Demo() {
                         )}
                       </AnimatePresence>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
@@ -261,31 +285,29 @@ export function Demo() {
                 </div>
 
                 <div className="mt-4 flex items-center gap-1.5">
-                  {Array.from({ length: guardians }).map((_, i) => (
-                    <motion.span
-                      key={i}
-                      initial={reduce ? undefined : { scale: 0, opacity: 0 }}
-                      animate={reduce ? undefined : { scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 420, damping: 22 }}
-                      className="inline-block h-4 w-4 rounded-full"
-                      style={{
-                        background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
-                        boxShadow: "0 0 8px rgba(255,140,40,0.55)",
-                      }}
-                    />
-                  ))}
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{
+                      background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
+                      boxShadow: "0 0 8px rgba(255,140,40,0.55)",
+                    }}
+                  />
+                  <span className="font-mono-num text-[12.5px]" style={{ color: "var(--ash)" }}>
+                    {guardians}/{SEAT_COUNT} {d.guardiansLabel}
+                  </span>
                 </div>
 
                 <div className="mt-4 flex gap-2.5">
                   <motion.button
                     type="button"
                     whileTap={reduce ? undefined : { scale: 0.96 }}
-                    onClick={() => setGuardians((g) => Math.min(12, g + 1))}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition-transform hover:-translate-y-0.5"
+                    disabled={guardians >= SEAT_COUNT}
+                    onClick={() => setGuardians((g) => Math.min(SEAT_COUNT, g + 1))}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     style={{ background: "linear-gradient(90deg, var(--ember), var(--amber))", color: "#1a0d04" }}
                   >
                     <Flame size={15} />
-                    {d.addGuardian}
+                    {guardians >= SEAT_COUNT ? d.seatsFull : d.addGuardian}
                   </motion.button>
                   <button
                     type="button"
@@ -337,6 +359,24 @@ function StartScreen({
           transition: { duration: 0.5, ease: EASE_OUT, delay },
         };
 
+  // Auto-cycling preview: guardians drift up to a full circle and back down on their own, so
+  // the "the fire grows with presence" idea is SHOWN before anyone touches anything. Frozen
+  // at a representative mid-size circle under reduced-motion (a cycling animation with no
+  // user control would just be motion for motion's sake there).
+  const [previewGuardians, setPreviewGuardians] = useState(reduce ? 5 : 1);
+  useEffect(() => {
+    if (reduce) return;
+    let n = 1;
+    let dir = 1;
+    const id = setInterval(() => {
+      n += dir;
+      if (n >= SEAT_COUNT) dir = -1;
+      if (n <= 1) dir = 1;
+      setPreviewGuardians(n);
+    }, 750);
+    return () => clearInterval(id);
+  }, [reduce]);
+
   const modes: { key: Difficulty; label: string }[] = [
     { key: "easy", label: d.modes.easy },
     { key: "normal", label: d.modes.normal },
@@ -373,7 +413,13 @@ function StartScreen({
           boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
         }}
       >
-        <FireCanvas guardians={3} health={70} reduce={reduce} idle />
+        <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
+        <GuardianRing guardians={previewGuardians} reduce={reduce} />
+        <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
+          <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
+            {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
+          </span>
+        </div>
       </motion.div>
 
       <motion.div {...anim(0.22)} className="mt-6 w-full">
@@ -589,6 +635,49 @@ function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: str
 // outer flicker tongues with independent phase offsets — reacts to `guardians` (size) and
 // `health` (color, from a cool ember to a roaring blaze). `idle` runs a gentle ambient loop
 // for the start-screen preview, ignoring the click-to-feed game state.
+/* ---------------------------------------------------------------- Guardian ring */
+
+// The real scene seats guardians in a circle of 8 around the campfire — this recreates that
+// arrangement as a flattened ellipse around the flame's base (a side-view perspective, not a
+// top-down map), instead of the flat inline row of dots used before. Each seat animates a
+// guardian in/out with a spring "arrival", so growing the circle visibly reads as "someone
+// sat down" rather than a counter ticking.
+function GuardianRing({ guardians, reduce }: { guardians: number; reduce: boolean }) {
+  return (
+    <div className="pointer-events-none absolute inset-0">
+      {Array.from({ length: SEAT_COUNT }).map((_, i) => {
+        const occupied = i < guardians;
+        // Flattened ellipse hugging the bottom edge — sits below the wood-feeding zone so the
+        // two never visually compete for the same band.
+        const angle = (i / SEAT_COUNT) * Math.PI * 2 - Math.PI / 2;
+        const left = 50 + Math.cos(angle) * 38;
+        const top = 90 + Math.sin(angle) * 6;
+        return (
+          <div key={i} className="absolute" style={{ left: `${left}%`, top: `${top}%`, transform: "translate(-50%, -50%)" }}>
+            <AnimatePresence>
+              {occupied && (
+                <motion.span
+                  initial={reduce ? undefined : { scale: 0, opacity: 0, y: 8 }}
+                  animate={reduce ? undefined : { scale: 1, opacity: 1, y: 0 }}
+                  exit={reduce ? undefined : { scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 360, damping: 20 }}
+                  className="block rounded-full"
+                  style={{
+                    width: 13,
+                    height: 13,
+                    background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
+                    boxShadow: "0 0 9px rgba(255,140,40,0.65)",
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function FireCanvas({
   guardians,
   health,
