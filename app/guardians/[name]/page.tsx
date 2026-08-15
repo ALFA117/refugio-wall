@@ -20,13 +20,29 @@ export default async function GuardianPage({ params }: { params: { name: string 
   const idx = entries.findIndex((e) => e.displayName.toLowerCase() === name.toLowerCase());
   const guardian = idx >= 0 ? entries[idx] : null;
 
+  // Generic WebPage schema — deliberately not Person/ProfilePage, since this represents a
+  // game handle's stats, not a verified real-world identity.
+  const jsonLd = guardian
+    ? {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: `${name} · Wall of Guardians`,
+        description: `${name} has earned ${guardian.brasas} embers on the Refugio Wall of Guardians, ranked #${idx + 1} of ${entries.length}.`,
+      }
+    : null;
+
   return (
-    <GuardianProfile
-      guardian={guardian}
-      name={name}
-      rank={idx}
-      total={entries.length}
-      source={bundle.source}
-    />
+    <>
+      {jsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      <GuardianProfile
+        guardian={guardian}
+        name={name}
+        rank={idx}
+        total={entries.length}
+        source={bundle.source}
+      />
+    </>
   );
 }

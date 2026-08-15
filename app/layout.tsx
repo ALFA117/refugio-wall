@@ -39,12 +39,24 @@ export const metadata: Metadata = {
   },
 };
 
+// Site-wide structured data. Deliberately a generic WebSite (not Person/Game schema, which
+// wouldn't honestly describe a leaderboard page) — safe, accurate SEO, nothing overclaimed.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Wall of Guardians",
+  url: CANONICAL_URL,
+  description:
+    "The public leaderboard for Refugio — a Decentraland campfire that only burns when people show up.",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={fraunces.variable}>
       <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         {children}
         <Analytics />
         <SpeedInsights />

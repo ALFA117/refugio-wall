@@ -158,6 +158,22 @@ export function Demo() {
   }
   resolveWoodRef.current = resolveWood;
 
+  // Keyboard shortcut: number keys 1-5 feed the wood in that slot, if any. Without this the
+  // mini-game is only playable by mouse/touch — the wood buttons exist briefly (1-2.5s) and
+  // relying on Tab to reach one in time isn't realistic for keyboard-only players.
+  useEffect(() => {
+    if (phase !== "playing") return;
+    function onKey(e: KeyboardEvent) {
+      const n = Number(e.key);
+      if (!Number.isInteger(n) || n < 1 || n > WOOD_SLOTS) return;
+      const w = wood.find((piece) => piece.slot === n - 1);
+      if (w) resolveWood(w.id, true);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, wood]);
+
   function startGame() {
     setGuardians(1);
     setHealth(70);
@@ -286,6 +302,15 @@ export function Demo() {
                                 transition={{ duration: cfg.ttl / 1000, ease: "linear" }}
                               />
                             )}
+                            {/* Discoverability for the number-key shortcut (keyboard players
+                                can't reliably Tab to a button that only lives ~1-2s). */}
+                            <span
+                              aria-hidden
+                              className="font-mono-num absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold"
+                              style={{ background: "var(--ground)", color: "var(--spark)", border: "1px solid var(--line-strong)" }}
+                            >
+                              {slot + 1}
+                            </span>
                           </motion.button>
                         )}
                       </AnimatePresence>
