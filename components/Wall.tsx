@@ -445,10 +445,10 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
             </p>
           </div>
 
-          <div className="flex flex-col items-center gap-2 sm:items-start">
+          <Link href="/stats" className="flex flex-col items-center gap-2 sm:items-start" style={{ color: "inherit", textDecoration: "none" }}>
             <FooterStat label={d.footerStats.guardians} value={entries.length} reduce={!!reduce} />
             <FooterStat label={d.footerStats.totalBrasas} value={totalBrasas} reduce={!!reduce} />
-          </div>
+          </Link>
 
           <div className="flex flex-wrap justify-center gap-2.5 sm:justify-start">
             <FooterLink label={d.cta.sceneSoon} disabled />

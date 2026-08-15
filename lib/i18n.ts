@@ -31,6 +31,18 @@ export type Dict = {
   emptyState: string;
   taglines: string[];
   viewAllGuardians: string;
+  statsPage: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    totalGuardians: string;
+    totalBrasas: string;
+    totalRounds: string;
+    avgBrasas: string;
+    mostActive: string;
+    badgeDistribution: string;
+    back: string;
+  };
   guardiansPage: {
     eyebrow: string;
     title: string;
@@ -121,6 +133,18 @@ const en: Dict = {
     "Presence is the only requirement.",
   ],
   viewAllGuardians: "View all guardians",
+  statsPage: {
+    eyebrow: "The numbers",
+    title: "Fire stats",
+    subtitle: "What the whole community has built together.",
+    totalGuardians: "Guardians",
+    totalBrasas: "Embers earned",
+    totalRounds: "Rounds played",
+    avgBrasas: "Avg. embers / guardian",
+    mostActive: "Most active",
+    badgeDistribution: "Badges earned",
+    back: "Back to the Wall",
+  },
   guardiansPage: {
     eyebrow: "Every guardian",
     title: "All guardians",
@@ -212,6 +236,18 @@ const es: Dict = {
     "La presencia es el único requisito.",
   ],
   viewAllGuardians: "Ver todos los guardianes",
+  statsPage: {
+    eyebrow: "Los números",
+    title: "Estadísticas del fuego",
+    subtitle: "Lo que toda la comunidad ha construido junta.",
+    totalGuardians: "Guardianes",
+    totalBrasas: "Brasas ganadas",
+    totalRounds: "Rondas jugadas",
+    avgBrasas: "Brasas prom. / guardián",
+    mostActive: "Más activo",
+    badgeDistribution: "Insignias ganadas",
+    back: "Volver al muro",
+  },
   guardiansPage: {
     eyebrow: "Todos los guardianes",
     title: "Todos los guardianes",
