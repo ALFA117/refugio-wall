@@ -3,15 +3,18 @@
 import { motion } from "framer-motion";
 import { Languages } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
+import { TAP_PRESS, SNAPPY } from "@/lib/motion";
 
 // A real animated switch (sliding highlight between EN/ES) instead of a single button that
 // just prints whichever language isn't active. Shared across Wall, GuardianProfile, and Demo —
 // those three had the same lang-toggle button hand-copied with the same styling.
 export function LangToggle({ lang, onClick, reduce }: { lang: Lang; onClick: () => void; reduce?: boolean }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       aria-label="Switch language"
+      whileTap={reduce ? undefined : TAP_PRESS}
+      transition={SNAPPY}
       className="inline-flex min-h-11 items-center gap-2 rounded-full border pl-3 pr-1.5"
       style={{ borderColor: "var(--line-violet)" }}
     >
@@ -36,6 +39,6 @@ export function LangToggle({ lang, onClick, reduce }: { lang: Lang; onClick: () 
           ES
         </span>
       </span>
-    </button>
+    </motion.button>
   );
 }

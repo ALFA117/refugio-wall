@@ -7,7 +7,7 @@ import { Flame, ArrowLeft, Share2, Crown, Check } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
 import { LangToggle } from "./LangToggle";
@@ -170,14 +170,16 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
     }
   }
   return (
-    <button
+    <motion.button
       onClick={share}
+      whileTap={TAP_PRESS}
+      transition={SNAPPY}
       className="mt-10 inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
       {copied ? <Check size={15} style={{ color: "var(--gold)" }} /> : <Share2 size={15} style={{ color: "var(--amber)" }} />}
       {copied ? d.profile.copied : d.profile.share}
-    </button>
+    </motion.button>
   );
 }
 

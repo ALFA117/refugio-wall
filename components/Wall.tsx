@@ -18,7 +18,7 @@ import { Flame, Crown, ArrowUpRight, Search, ChevronDown, ChevronUp, Share2, Che
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
 import { LangToggle } from "./LangToggle";
@@ -988,10 +988,12 @@ function FooterLink({
     );
   }
   return (
-    <a
+    <motion.a
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
+      whileTap={TAP_PRESS}
+      transition={SNAPPY}
       className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
@@ -1001,7 +1003,7 @@ function FooterLink({
         className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
         style={{ color: "var(--amber)" }}
       />
-    </a>
+    </motion.a>
   );
 }
 
@@ -1027,9 +1029,11 @@ function WallShareButton({ d }: { d: Dict }) {
     }
   }
   return (
-    <button
+    <motion.button
       type="button"
       onClick={share}
+      whileTap={TAP_PRESS}
+      transition={SNAPPY}
       className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
@@ -1039,7 +1043,7 @@ function WallShareButton({ d }: { d: Dict }) {
       ) : (
         <Share2 size={14} className="transition-transform group-hover:scale-110" style={{ color: "var(--amber)" }} />
       )}
-    </button>
+    </motion.button>
   );
 }
 

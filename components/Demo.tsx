@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Flame, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
 import { DICTS, type Dict } from "@/lib/i18n";
-import { EASE_OUT } from "@/lib/motion";
+import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
 import { LangToggle } from "./LangToggle";
@@ -394,15 +394,17 @@ export function Demo() {
                     <Flame size={15} />
                     {guardians >= SEAT_COUNT ? d.seatsFull : d.addGuardian}
                   </motion.button>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setPhase("start")}
+                    whileTap={reduce ? undefined : TAP_PRESS}
+                    transition={SNAPPY}
                     className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-[13px] transition-colors hover:text-[var(--warm-white)]"
                     style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
                   >
                     <RotateCcw size={14} />
                     {d.emptyCircle}
-                  </button>
+                  </motion.button>
                 </div>
                 <p className="mt-3 text-center text-[12px]" style={{ color: "var(--ash-dim)" }}>
                   {d.feedHint}
@@ -658,15 +660,17 @@ function ShareBestButton({ d, best }: { d: Dict["demo"]; best: number }) {
     }
   }
   return (
-    <button
+    <motion.button
       type="button"
       onClick={share}
+      whileTap={TAP_PRESS}
+      transition={SNAPPY}
       className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-[13.5px] font-medium transition-colors hover:border-[var(--amber)]"
       style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
     >
       {copied ? <Check size={14} style={{ color: "var(--gold)" }} /> : <Share2 size={14} style={{ color: "var(--amber)" }} />}
       {copied ? d.copied : d.share}
-    </button>
+    </motion.button>
   );
 }
 
@@ -758,6 +762,14 @@ function seatRandom(seed: number): number {
   return x - Math.floor(x);
 }
 
+// Math.cos/sin can differ in their last 1-2 bits between Node's SSR pass and the browser's
+// runtime (same V8 family, not bit-identical transcendental output) — with no rounding, that
+// shows up as a React hydration mismatch warning on every `left`/`top` percentage. Rounding
+// absorbs the ULP-level noise so both renders produce the exact same string.
+function round4(n: number): number {
+  return Math.round(n * 10000) / 10000;
+}
+
 const SEAT_HUES: [string, string][] = [
   ["var(--spark)", "var(--ember)"],
   ["#ffcf6b", "#ff8a3d"],
@@ -776,8 +788,8 @@ const SEATS = Array.from({ length: SEAT_COUNT }, (_, i) => {
   const ry = 6 + (seatRandom(i * 3 + 3) - 0.5) * 2;
   const depth = (Math.sin(angle) + 1) / 2; // 0 = back of the circle, 1 = front
   return {
-    left: 50 + Math.cos(angle) * rx,
-    top: 90 + Math.sin(angle) * ry,
+    left: round4(50 + Math.cos(angle) * rx),
+    top: round4(90 + Math.sin(angle) * ry),
     depth,
     size: 9 + depth * 7 + seatRandom(i * 5 + 7) * 2,
     colors: SEAT_HUES[Math.floor(seatRandom(i * 11 + 2) * SEAT_HUES.length)],
