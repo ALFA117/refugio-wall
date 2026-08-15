@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getLeaderboard, kvSet, isKvConfigured, type Guardian, type Timeframe } from "@/lib/leaderboard";
+import { getLeaderboard, kvSet, isKvConfigured, type Timeframe } from "@/lib/leaderboard";
+import { isRateLimited } from "@/lib/rateLimit";
+import { IngestSchema } from "@/lib/ingestSchema";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,13 @@ export async function GET(req: Request) {
 // round close). Guarded by a shared secret so only our server can write. Stores in Vercel KV
 // when configured; otherwise responds 501 so the caller knows ingest isn't wired yet.
 export async function POST(req: Request) {
+  // Rate-limited before the secret check too, so repeated wrong-secret guesses get throttled
+  // instead of getting unlimited free attempts.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (isRateLimited(`ingest:${ip}`, 20, 60_000)) {
+    return NextResponse.json({ error: "rate limited" }, { status: 429 });
+  }
+
   const secret = process.env.REFUGIO_INGEST_SECRET;
   if (!secret || req.headers.get("x-refugio-secret") !== secret) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -25,20 +34,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "KV not configured" }, { status: 501 });
   }
 
-  let entries: Guardian[];
+  let json: unknown;
   try {
-    const body = (await req.json()) as { entries?: Guardian[] };
-    entries = Array.isArray(body.entries) ? body.entries : [];
+    json = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  const clean = entries
-    .filter((e) => e && typeof e.displayName === "string" && typeof e.brasas === "number")
-    .slice(0, 50)
-    .map((e) => ({ displayName: e.displayName, brasas: e.brasas }));
+  const parsed = IngestSchema.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "invalid payload", issues: parsed.error.issues }, { status: 400 });
+  }
 
-  const ok = await kvSet(clean);
+  const ok = await kvSet(parsed.data.entries);
   if (!ok) return NextResponse.json({ error: "kv write failed" }, { status: 502 });
-  return NextResponse.json({ ok: true, written: clean.length });
+  return NextResponse.json({ ok: true, written: parsed.data.entries.length });
 }
