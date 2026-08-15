@@ -151,13 +151,49 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         </button>
       </div>
 
-      {/* Prominent play CTA — the demo used to live only as a small footer link; the top of
-          the page should invite you to actually try the mechanic, not just read a leaderboard. */}
-      <motion.div
-        initial={reduce ? undefined : { opacity: 0, y: -10 }}
+      {/* Header — identity comes before the ask. A visitor should learn what this page IS
+          (Wall of Guardians) before being invited to go DO something (try the demo); leading
+          with the CTA put the action ahead of the introduction, which is what read as "off." */}
+      <motion.header
+        className="relative mt-7 text-center"
+        initial={reduce ? undefined : { opacity: 0, y: 18 }}
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE_OUT }}
-        className="relative z-10 mt-5"
+        transition={{ duration: 0.6, ease: EASE_OUT }}
+      >
+        <div
+          className="eyebrow inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5"
+          style={{ borderColor: "var(--line-violet)", background: "rgba(139,124,255,0.06)" }}
+        >
+          {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
+          {staleConnection && (
+            <span
+              className="font-mono-num normal-case tracking-normal"
+              style={{ color: "var(--ash-dim)" }}
+              role="status"
+            >
+              · {d.reconnecting}
+            </span>
+          )}
+        </div>
+        <h1
+          className="font-serif-display mx-auto mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
+          style={{ textWrap: "balance" }}
+        >
+          {d.titlePre}{" "}
+          <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
+          {d.subtitle}
+        </p>
+        <RotatingTagline items={d.taglines} reduce={!!reduce} />
+      </motion.header>
+
+      {/* Play CTA — now the natural next beat after the introduction, not competing with it. */}
+      <motion.div
+        initial={reduce ? undefined : { opacity: 0, y: -6 }}
+        animate={reduce ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE_OUT, delay: reduce ? 0 : 0.15 }}
+        className="relative z-10 mx-auto mt-7 max-w-sm"
       >
         <Link href="/demo" className="block">
           <motion.div
@@ -177,40 +213,6 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           </motion.div>
         </Link>
       </motion.div>
-
-      {/* Header — mt-10 gives the CTA room to breathe instead of the eyebrow crowding right
-          under its glow; the CTA is meant to be the loud, attention-grabbing element, the
-          header the calmer one right after, not two things fighting in the same beat. */}
-      <motion.header
-        className="relative mt-10 text-center"
-        initial={reduce ? undefined : { opacity: 0, y: 18 }}
-        animate={reduce ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE_OUT }}
-      >
-        <div className="eyebrow flex items-center justify-center gap-2">
-          {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
-          {staleConnection && (
-            <span
-              className="font-mono-num normal-case tracking-normal"
-              style={{ color: "var(--ash-dim)" }}
-              role="status"
-            >
-              · {d.reconnecting}
-            </span>
-          )}
-        </div>
-        <h1
-          className="font-serif-display mx-auto mt-4 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
-          style={{ textWrap: "balance" }}
-        >
-          {d.titlePre}{" "}
-          <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
-          {d.subtitle}
-        </p>
-        <RotatingTagline items={d.taglines} reduce={!!reduce} />
-      </motion.header>
 
       {/* Controls: filters + search */}
       <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
