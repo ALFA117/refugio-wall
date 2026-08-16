@@ -22,6 +22,7 @@ import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
 import { LangToggle } from "./LangToggle";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 // Deep-linkable profile URL for a guardian.
 export const guardianHref = (name: string) => `/guardians/${encodeURIComponent(name)}`;
@@ -78,38 +79,55 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
     prevRankRef.current = null;
     setRankDelta({});
   }, [tf]);
+  const [retrying, setRetrying] = useState(false);
+
+  // Plain function, redefined each render — closes over the current `tf`/setters freshly, no
+  // ref indirection needed. The effect below already tears down and recreates its interval
+  // whenever `tf`/`bundle.source` change, so each interval tick already calls a fresh closure;
+  // the manual retry button (onClick, also re-created each render) gets the same freshness.
+  async function pollLeaderboard() {
+    try {
+      const res = await fetch(`/api/leaderboard?timeframe=${tf}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { entries: Guardian[] };
+      setFrames((prev) => ({ ...prev, [tf]: data.entries }));
+      failCount.current = 0;
+      setStaleConnection(false);
+
+      const newRanks: Record<string, number> = {};
+      data.entries.forEach((e, i) => { newRanks[e.displayName] = i; });
+      if (prevRankRef.current) {
+        const deltas: Record<string, number> = {};
+        for (const name in newRanks) {
+          const prev = prevRankRef.current[name];
+          if (prev !== undefined && prev !== newRanks[name]) deltas[name] = prev - newRanks[name];
+        }
+        if (Object.keys(deltas).length) {
+          setRankDelta(deltas);
+          setTimeout(() => setRankDelta({}), 6000);
+        }
+      }
+      prevRankRef.current = newRanks;
+    } catch {
+      failCount.current += 1;
+      if (failCount.current >= 2) setStaleConnection(true);
+    }
+  }
+
   useEffect(() => {
     if (bundle.source !== "live") return;
-    const id = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/leaderboard?timeframe=${tf}`, { cache: "no-store" });
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as { entries: Guardian[] };
-        setFrames((prev) => ({ ...prev, [tf]: data.entries }));
-        failCount.current = 0;
-        setStaleConnection(false);
-
-        const newRanks: Record<string, number> = {};
-        data.entries.forEach((e, i) => { newRanks[e.displayName] = i; });
-        if (prevRankRef.current) {
-          const deltas: Record<string, number> = {};
-          for (const name in newRanks) {
-            const prev = prevRankRef.current[name];
-            if (prev !== undefined && prev !== newRanks[name]) deltas[name] = prev - newRanks[name];
-          }
-          if (Object.keys(deltas).length) {
-            setRankDelta(deltas);
-            setTimeout(() => setRankDelta({}), 6000);
-          }
-        }
-        prevRankRef.current = newRanks;
-      } catch {
-        failCount.current += 1;
-        if (failCount.current >= 2) setStaleConnection(true);
-      }
-    }, 30000);
+    const id = setInterval(() => void pollLeaderboard(), 30000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tf, bundle.source]);
+
+  // "Reconnecting…" shouldn't just be a passive label — a real retry button lets a visitor
+  // force an immediate attempt instead of waiting up to 30s for the next scheduled poll.
+  async function retryNow() {
+    setRetrying(true);
+    await pollLeaderboard();
+    setRetrying(false);
+  }
 
   const d = DICTS[lang];
   const entries = frames[tf];
@@ -260,12 +278,17 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           >
             {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
             {staleConnection && (
-              <span
-                className="font-mono-num normal-case tracking-normal"
-                style={{ color: "var(--ash-dim)" }}
-                role="status"
-              >
-                · {d.reconnecting}
+              <span className="font-mono-num normal-case tracking-normal" role="status">
+                ·{" "}
+                <button
+                  type="button"
+                  onClick={() => void retryNow()}
+                  disabled={retrying}
+                  className="underline decoration-dotted underline-offset-2 disabled:opacity-60"
+                  style={{ color: "var(--ash-dim)" }}
+                >
+                  {retrying ? d.retrying : `${d.reconnecting} · ${d.retryNow}`}
+                </button>
               </span>
             )}
           </div>
@@ -315,6 +338,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         <SearchBox d={d} q={q} setQ={setQ} entries={entries} inputRef={searchInputRef} />
       </div>
 
+      <ErrorBoundary fallback={<LeaderboardFallback d={d} />}>
       {empty ? (
         <EmptyState d={d} reduce={!!reduce} />
       ) : (
@@ -481,6 +505,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       </table>
         </>
       )}
+      </ErrorBoundary>
 
       <HowItWorks d={d} reduce={!!reduce} />
 
@@ -589,6 +614,27 @@ function LeaderBar({
 }
 
 // Shown when there are no guardians yet (e.g. KV is live but the scene hasn't pushed a round).
+// Shown if the podium/rows section throws — points at the full roster instead of leaving a
+// blank gap where the leaderboard should be, so the rest of the page (header, CTA, footer)
+// stays usable even if this specific section crashes.
+function LeaderboardFallback({ d }: { d: Dict }) {
+  return (
+    <div className="relative z-10 mt-10 flex flex-col items-center gap-3 text-center">
+      <p className="text-[14px]" style={{ color: "var(--ash-dim)" }}>
+        {d.leaderboardError}
+      </p>
+      <Link
+        href="/guardians"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-[13px] font-medium transition-colors hover:border-[var(--amber)]"
+        style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+      >
+        {d.viewAllGuardians}
+        <ArrowUpRight size={13} />
+      </Link>
+    </div>
+  );
+}
+
 function EmptyState({ d, reduce }: { d: Dict; reduce: boolean }) {
   return (
     <div className="relative z-10 mt-20 flex flex-col items-center text-center">

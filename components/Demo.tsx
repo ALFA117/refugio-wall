@@ -9,6 +9,7 @@ import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
 import { LangToggle } from "./LangToggle";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const FEED_GAIN = 12;
 
@@ -254,8 +255,10 @@ export function Demo() {
               }}
             >
               <div className="relative">
-                <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
-                <GuardianRing guardians={guardians} reduce={!!reduce} />
+                <ErrorBoundary fallback={<CanvasFallback />}>
+                  <FireCanvas guardians={guardians} health={health} reduce={!!reduce} />
+                  <GuardianRing guardians={guardians} reduce={!!reduce} />
+                </ErrorBoundary>
                 {/* Both measure "inset-0" against THIS box (the canvas area only) — they were
                     previously siblings of this div instead of children, so inset-0 resolved
                     against the whole card (canvas + controls section below), making a miss
@@ -559,8 +562,10 @@ function StartScreen({
           boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
         }}
       >
-        <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
-        <GuardianRing guardians={previewGuardians} reduce={reduce} />
+        <ErrorBoundary fallback={<CanvasFallback />}>
+          <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
+          <GuardianRing guardians={previewGuardians} reduce={reduce} />
+        </ErrorBoundary>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
           <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
             {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
@@ -879,6 +884,28 @@ function SeatArrivalBurst({ colors }: { colors: [string, string] }) {
         );
       })}
     </span>
+  );
+}
+
+// Shown if FireCanvas/GuardianRing throw — a static ember glow instead of a blank hole where
+// the fire should be, so a rendering bug in the canvas doesn't make the whole card look broken.
+function CanvasFallback() {
+  return (
+    <div
+      aria-hidden
+      className="flex h-full w-full items-center justify-center"
+      style={{ minHeight: 220 }}
+    >
+      <div
+        style={{
+          width: 90,
+          height: 90,
+          borderRadius: "50%",
+          background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
+          boxShadow: "0 0 60px rgba(255,150,60,0.4)",
+        }}
+      />
+    </div>
   );
 }
 

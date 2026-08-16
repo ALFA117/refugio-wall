@@ -19,6 +19,9 @@ export type Dict = {
   footerPreview: string;
   footerStats: { guardians: string; totalBrasas: string };
   reconnecting: string;
+  retryNow: string;
+  retrying: string;
+  leaderboardError: string;
   cta: { scene: string; sceneSoon: string; demo: string; github: string; share: string; copied: string };
   howTitle: string;
   howEyebrow: string;
@@ -134,6 +137,9 @@ const en: Dict = {
   footerPreview: "Preview data — goes live once the scene starts pushing rounds.",
   footerStats: { guardians: "Guardians", totalBrasas: "Total embers" },
   reconnecting: "reconnecting…",
+  retryNow: "retry now",
+  retrying: "retrying…",
+  leaderboardError: "Something went wrong showing the leaderboard here.",
   cta: { scene: "Enter the scene", sceneSoon: "Scene — publishing soon", demo: "Try it in your browser", github: "GitHub", share: "Share", copied: "Link copied" },
   howTitle: "How the fire works",
   howEyebrow: "The scene",
@@ -267,6 +273,9 @@ const es: Dict = {
   footerPreview: "Datos de muestra — se activa cuando la escena empiece a enviar rondas.",
   footerStats: { guardians: "Guardianes", totalBrasas: "Brasas totales" },
   reconnecting: "reconectando…",
+  retryNow: "reintentar",
+  retrying: "reintentando…",
+  leaderboardError: "Algo salió mal mostrando el leaderboard aquí.",
   cta: { scene: "Entrar a la escena", sceneSoon: "Escena — próximamente", demo: "Pruébalo en tu navegador", github: "GitHub", share: "Compartir", copied: "Enlace copiado" },
   howTitle: "Cómo funciona el fuego",
   howEyebrow: "La escena",
