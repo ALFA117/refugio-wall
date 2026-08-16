@@ -11,9 +11,15 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#0e0a16",
     theme_color: "#0e0a16",
+    // `purpose: "any maskable"` on both: Android adaptive icons crop to the inner 80% safe
+    // zone when maskable, and the artwork already fits well inside that (a centered circle at
+    // 62.5% of canvas diameter, full-bleed dark background behind it) — no separate maskable-
+    // only asset needed, just declaring it so Android stops falling back to a generic frame.
     icons: [
-      { src: "/pwa-icon-192", sizes: "192x192", type: "image/png" },
-      { src: "/pwa-icon-512", sizes: "512x512", type: "image/png" },
+      { src: "/pwa-icon-192", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/pwa-icon-192", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/pwa-icon-512", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/pwa-icon-512", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

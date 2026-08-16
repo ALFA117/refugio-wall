@@ -1,3 +1,7 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
+
 /** @type {import('next').NextConfig} */
 
 // A pragmatic baseline, not a maximal-strictness CSP: 'unsafe-inline' on script-src is needed
@@ -38,4 +42,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
