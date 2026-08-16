@@ -254,8 +254,8 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           type="button"
           onClick={() => setShowShortcuts(true)}
           aria-label={d.shortcuts.hint}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border font-mono-num text-[13px] transition-colors hover:text-[var(--warm-white)]"
-          style={{ borderColor: "var(--line-violet)", color: "var(--ash)" }}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border font-mono-num text-[13px] font-semibold transition-colors hover:text-[var(--warm-white)]"
+          style={{ borderColor: "rgba(162, 129, 255, 0.55)", background: "rgba(139,124,255,0.08)", color: "var(--ash)" }}
         >
           ?
         </button>
@@ -274,9 +274,16 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
         style={{
-          borderColor: "var(--line-violet)",
-          background: "linear-gradient(180deg, rgba(26,18,40,0.55), rgba(13,9,20,0.7))",
-          boxShadow: "0 50px 130px -60px rgba(139,124,255,0.4), inset 0 1px 0 rgba(255,255,255,0.045)",
+          // Previous values (28% border, background blended toward near-black) were nearly
+          // the same tone as the page itself — the card had no real contrast against its own
+          // background, so it read as a formless dark blob instead of a surface (confirmed via
+          // a real screenshot: "se ve todo bugueado" — no visible edge at all). Border opacity
+          // and background lightness both raised substantially so the card actually separates
+          // from the page instead of blending into it.
+          borderColor: "rgba(162, 129, 255, 0.55)",
+          background: "linear-gradient(180deg, rgba(34,23,51,0.92), rgba(20,14,32,0.94))",
+          boxShadow:
+            "0 40px 100px -35px rgba(139,124,255,0.55), 0 0 0 1px rgba(162,129,255,0.15), inset 0 1px 0 rgba(255,255,255,0.09)",
         }}
       >
         <HeroGlow reduce={!!reduce} />
