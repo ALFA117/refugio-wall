@@ -269,7 +269,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           source, not just a flat panel) — this is the structural fix for "looks flat/plain,"
           not another spacing tweak. */}
       <motion.section
-        className="relative mt-8 overflow-hidden rounded-[28px] border px-6 py-10 text-center sm:px-12 sm:py-14"
+        className="relative mt-8 overflow-hidden rounded-[28px] border px-6 py-10 text-center backdrop-blur-xl sm:px-12 sm:py-14"
         initial={reduce ? undefined : { opacity: 0, y: 18 }}
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE_OUT }}
