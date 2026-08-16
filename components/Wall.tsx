@@ -18,6 +18,7 @@ import { Flame, Crown, ArrowUpRight, Search, ChevronDown, ChevronUp, Share2, Che
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
+import { diffActivity } from "@/lib/activity";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
@@ -80,6 +81,11 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
     setRankDelta({});
   }, [tf]);
   const [retrying, setRetrying] = useState(false);
+  // Activity feed: a handful of human-readable events synthesized from the same poll diff that
+  // already drives rankDelta — "X joined the leaderboard" / "X moved up to #N" — instead of a
+  // second data source. Newest first, capped so it never grows unbounded across a long session.
+  const [activity, setActivity] = useState<{ id: string; text: string }[]>([]);
+  const activityId = useRef(0);
 
   // Plain function, redefined each render — closes over the current `tf`/setters freshly, no
   // ref indirection needed. The effect below already tears down and recreates its interval
@@ -102,9 +108,16 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
           const prev = prevRankRef.current[name];
           if (prev !== undefined && prev !== newRanks[name]) deltas[name] = prev - newRanks[name];
         }
+        const events = diffActivity(prevRankRef.current, newRanks, d.activityFeed);
         if (Object.keys(deltas).length) {
           setRankDelta(deltas);
           setTimeout(() => setRankDelta({}), 6000);
+        }
+        if (events.length) {
+          setActivity((prevList) => [
+            ...events.map((text) => ({ id: `a${activityId.current++}`, text })),
+            ...prevList,
+          ].slice(0, 5));
         }
       }
       prevRankRef.current = newRanks;
@@ -507,6 +520,8 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       )}
       </ErrorBoundary>
 
+      <ActivityFeed items={activity} title={d.activityFeed.title} reduce={!!reduce} />
+
       <HowItWorks d={d} reduce={!!reduce} />
 
       {/* Footer — brand, live stats, and links as three real columns instead of one stacked
@@ -614,6 +629,36 @@ function LeaderBar({
 }
 
 // Shown when there are no guardians yet (e.g. KV is live but the scene hasn't pushed a round).
+// A handful of "X just happened" lines synthesized from live-poll diffs (see pollLeaderboard).
+// Naturally empty in sample mode (no polling happens), so it renders nothing there rather than
+// showing a permanently-empty "Just happened" box with nothing under it.
+function ActivityFeed({ items, title, reduce }: { items: { id: string; text: string }[]; title: string; reduce: boolean }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="card relative z-10 mt-6 p-4">
+      <div className="eyebrow">{title}</div>
+      <ul className="mt-2.5 flex flex-col gap-1.5">
+        <AnimatePresence initial={false}>
+          {items.map((item) => (
+            <motion.li
+              key={item.id}
+              layout={!reduce}
+              initial={reduce ? undefined : { opacity: 0, x: -8 }}
+              animate={reduce ? undefined : { opacity: 1, x: 0 }}
+              exit={reduce ? undefined : { opacity: 0 }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+              className="text-[13px]"
+              style={{ color: "var(--ash)" }}
+            >
+              {item.text}
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+    </div>
+  );
+}
+
 // Shown if the podium/rows section throws — points at the full roster instead of leaving a
 // blank gap where the leaderboard should be, so the rest of the page (header, CTA, footer)
 // stays usable even if this specific section crashes.

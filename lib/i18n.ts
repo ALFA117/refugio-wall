@@ -22,6 +22,7 @@ export type Dict = {
   retryNow: string;
   retrying: string;
   leaderboardError: string;
+  activityFeed: { title: string; joined: string; movedUp: string };
   cta: { scene: string; sceneSoon: string; demo: string; github: string; share: string; copied: string };
   howTitle: string;
   howEyebrow: string;
@@ -140,6 +141,7 @@ const en: Dict = {
   retryNow: "retry now",
   retrying: "retrying…",
   leaderboardError: "Something went wrong showing the leaderboard here.",
+  activityFeed: { title: "Just happened", joined: "{name} joined the leaderboard", movedUp: "{name} moved up to #{rank}" },
   cta: { scene: "Enter the scene", sceneSoon: "Scene — publishing soon", demo: "Try it in your browser", github: "GitHub", share: "Share", copied: "Link copied" },
   howTitle: "How the fire works",
   howEyebrow: "The scene",
@@ -276,6 +278,7 @@ const es: Dict = {
   retryNow: "reintentar",
   retrying: "reintentando…",
   leaderboardError: "Algo salió mal mostrando el leaderboard aquí.",
+  activityFeed: { title: "Acaba de pasar", joined: "{name} se unió al leaderboard", movedUp: "{name} subió al puesto #{rank}" },
   cta: { scene: "Entrar a la escena", sceneSoon: "Escena — próximamente", demo: "Pruébalo en tu navegador", github: "GitHub", share: "Compartir", copied: "Enlace copiado" },
   howTitle: "Cómo funciona el fuego",
   howEyebrow: "La escena",
