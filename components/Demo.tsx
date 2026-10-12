@@ -306,7 +306,7 @@ export function Demo() {
                                 can't reliably Tab to a button that only lives ~1-2s). */}
                             <span
                               aria-hidden
-                              className="font-mono-num absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold"
+                              className="font-mono-num absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold"
                               style={{ background: "var(--ground)", color: "var(--spark)", border: "1px solid var(--line-strong)" }}
                             >
                               {slot + 1}
@@ -348,7 +348,7 @@ export function Demo() {
 
               <div className="relative z-10 border-t px-5 py-4" style={{ borderColor: "var(--line)" }}>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+                  <span className="font-mono-num text-xs uppercase tracking-widest" style={{ color: "var(--violet)" }}>
                     {d.fireHealth}
                   </span>
                   <span className="font-mono-num text-[13px]" style={{ color: healthColor }}>
@@ -496,7 +496,7 @@ function StartScreen({
       {/* Difficulty + Play sit right here, high up — no scrolling past the preview required
           to get to the one thing that matters: starting. */}
       <motion.div {...anim(0.16)} className="mt-6 w-full">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+        <div className="mb-2 text-xs font-medium uppercase tracking-widest" style={{ color: "var(--violet)" }}>
           {d.difficulty}
         </div>
         <div
@@ -567,7 +567,7 @@ function StartScreen({
           <GuardianRing guardians={previewGuardians} reduce={reduce} />
         </ErrorBoundary>
         <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
-          <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
+          <span className="font-mono-num text-xs" style={{ color: "var(--ash)" }}>
             {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
           </span>
         </div>
@@ -741,7 +741,7 @@ function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: str
       <span aria-hidden style={{ color }}>
         {icon}
       </span>
-      <span aria-hidden className="font-mono-num text-[11px] uppercase tracking-wider" style={{ color: "var(--ash-dim)" }}>
+      <span aria-hidden className="font-mono-num text-xs uppercase tracking-wider" style={{ color: "var(--ash-dim)" }}>
         {label}
       </span>
       <span aria-hidden className="font-mono-num text-[13px] font-semibold" style={{ color }}>

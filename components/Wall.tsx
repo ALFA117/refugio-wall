@@ -566,7 +566,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
             <WallShareButton d={d} />
           </div>
         </div>
-        <div className="mt-10 text-center font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
+        <div className="mt-10 text-center font-mono-num text-xs tracking-widest" style={{ color: "var(--ash-dim)" }}>
           REFUGIO · 🔥 · BUILT ON DECENTRALAND
         </div>
       </motion.footer>
@@ -617,7 +617,7 @@ function LeaderBar({
                 <Crown size={16} strokeWidth={1.7} style={{ color: "var(--gold)" }} />
                 <RecordBurst active={newRecord && !reduce} />
               </span>
-              <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+              <span className="font-mono-num text-xs uppercase tracking-widest" style={{ color: "var(--violet)" }}>
                 {d.leading}
               </span>
               <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: "var(--warm-white)" }}>
@@ -1157,7 +1157,7 @@ function PodiumCard({
       <div className="relative">
         <GuardianDot big={isFirst} />
         <span
-          className="font-mono-num absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[11px]"
+          className="font-mono-num absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-xs"
           style={{ background: "var(--ground)", color: MEDAL[rank], border: `1px solid ${MEDAL[rank]}` }}
         >
           {rank + 1}
@@ -1178,7 +1178,7 @@ function PodiumCard({
       </div>
       {typeof guardian.gamesPlayed === "number" && (
         <span
-          className="max-h-0 overflow-hidden text-[11px] opacity-0 transition-all duration-300 group-hover:mt-1.5 group-hover:max-h-4 group-hover:opacity-100"
+          className="max-h-0 overflow-hidden text-xs opacity-0 transition-all duration-300 group-hover:mt-1.5 group-hover:max-h-4 group-hover:opacity-100"
           style={{ color: "var(--ash-dim)" }}
         >
           {guardian.gamesPlayed} {d.rounds}
@@ -1297,7 +1297,7 @@ export function Badge({ brasas, d }: { brasas: number; d: Dict }) {
   if (!b) return null;
   return (
     <span
-      className="font-mono-num shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider"
+      className="font-mono-num shrink-0 rounded-full px-2 py-0.5 text-xs uppercase tracking-wider"
       style={{ color: b.color, border: `1px solid ${b.color}`, opacity: 0.85 }}
     >
       {b.label}

@@ -124,7 +124,7 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
           {tierCounts.map(({ tier, count }) => (
             <div key={tier.key} className="flex items-center gap-3">
               <span
-                className="font-mono-num w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-[10px] uppercase tracking-wider"
+                className="font-mono-num w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-xs uppercase tracking-wider"
                 style={{ color: tier.color, border: `1px solid ${tier.color}` }}
               >
                 {d.badges[tier.key as keyof typeof d.badges]}
@@ -166,7 +166,7 @@ function StatCard({ icon, label, value, reduce, delay }: { icon: ReactNode; labe
     >
       <span style={{ color: "var(--ember)" }}>{icon}</span>
       <TickerNumber value={value} reduce={reduce} className="font-mono-num text-xl font-semibold" />
-      <span className="text-[11px]" style={{ color: "var(--ash-dim)" }}>
+      <span className="text-xs" style={{ color: "var(--ash-dim)" }}>
         {label}
       </span>
     </motion.div>

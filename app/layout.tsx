@@ -3,6 +3,7 @@ import { Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
+import { AmbientBackground } from "@/components/AmbientBackground";
 
 // Self-hosted at build time (no runtime request to Google's CDN, no CLS, no CSP risk).
 // Fraunces: a soft, slightly dramatic serif with deep optical sizing — carries the
@@ -56,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={fraunces.variable}>
       <body>
+        <AmbientBackground />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         {children}
         <Analytics />

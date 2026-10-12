@@ -91,3 +91,33 @@ body {
   html { scroll-behavior: auto; }
   .skeleton::after { animation: none; }
 }
+
+/* ─── Fondo ambiental (AmbientBackground, receta 1: cielo, chispas y figuras) ─── */
+body { isolation: isolate; }
+.rf-amb { position: fixed; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; }
+.rf-calm .rf-stage, .rf-calm .rf-sky { opacity: 0.5; }
+.rf-sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rf-stage { position: absolute; inset: 0; perspective: 900px; perspective-origin: 50% 40%; }
+.rf-float { position: absolute; transform-style: preserve-3d; will-change: transform; }
+.rf-spin { position: relative; transform-style: preserve-3d; transform: rotateX(var(--tilt, 0deg)); }
+.rf-spin.rf-animate { animation-name: rf-rotate; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes rf-rotate {
+  from { transform: rotateX(var(--tilt, 0deg)) rotateY(0deg) rotateZ(0deg); }
+  to   { transform: rotateX(calc(var(--tilt, 0deg) + 360deg)) rotateY(360deg) rotateZ(90deg); }
+}
+.rf-face {
+  position: absolute;
+  border: 1.5px solid currentColor;
+  background: linear-gradient(135deg, color-mix(in srgb, currentColor 18%, transparent), transparent 70%);
+  box-shadow: 0 0 18px -4px currentColor, inset 0 0 20px -8px currentColor;
+}
+.rf-ring {
+  position: absolute; inset: 0; border: 2px solid currentColor; border-radius: 50%;
+  box-shadow: 0 0 22px -4px currentColor, inset 0 0 22px -6px currentColor;
+}
+.rf-guardian {
+  position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
+  background: var(--amber); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--ember) 70%, transparent);
+}
+.rf-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 40%, rgb(14 10 22 / 0.55), transparent 75%); }
+@media (prefers-reduced-motion: reduce) { .rf-animate { animation: none !important; } }

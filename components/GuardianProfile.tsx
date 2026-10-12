@@ -132,7 +132,7 @@ export function GuardianProfile({
           {trend && trend.length >= 2 && (
             <div className="mt-5 flex flex-col items-center gap-1.5">
               <Sparkline values={trend} />
-              <span className="text-[11px]" style={{ color: "var(--ash-dim)" }}>
+              <span className="text-xs" style={{ color: "var(--ash-dim)" }}>
                 {d.profile.trend}
               </span>
             </div>
@@ -174,7 +174,7 @@ export function GuardianProfile({
         </section>
       )}
 
-      <div className="relative z-10 mt-auto pt-16 text-center font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
+      <div className="relative z-10 mt-auto pt-16 text-center font-mono-num text-xs tracking-widest" style={{ color: "var(--ash-dim)" }}>
         REFUGIO · 🔥 · BUILT ON DECENTRALAND
       </div>
     </main>
@@ -220,7 +220,7 @@ function Badge({ label }: { label: { label: string; color: string } | null }) {
   if (!label) return null;
   return (
     <span
-      className="font-mono-num rounded-full px-2.5 py-0.5 text-[11px] uppercase tracking-wider"
+      className="font-mono-num rounded-full px-2.5 py-0.5 text-xs uppercase tracking-wider"
       style={{ color: label.color, border: `1px solid ${label.color}`, opacity: 0.9 }}
     >
       {label.label}

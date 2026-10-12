@@ -66,3 +66,24 @@ The E2E suite runs against a production build (`next start`) on port 3100, not `
 ## Deploy
 
 Deploys to Vercel. Set the env vars in the project settings; no env is required for the sample-data preview. Live at [wall-of-guardians.vercel.app](https://wall-of-guardians.vercel.app).
+
+## FIX_NOTES (rediseño /diseno, 2026-10-11)
+
+- **Texto por debajo de 12 px**: 17 etiquetas de 10–11 px (badges de rango, "Leading", número del podio, pie, rondas jugadas, dificultad de la demo, estadísticas) subieron a 12 px. El selector EN/ES tenía letras de 10 px en un switch de 52×26; ahora tiene 12 px en 68×32, dentro de un botón de 44 px, y su `aria-label` dice a qué idioma cambia.
+
+## DESIGN_NOTES
+
+- **Fondo 3D: el dado sacó la receta 1 (figuras CSS 3D + constelación).** Se adaptó a la fogata (`components/AmbientBackground.tsx`, montado en `layout.tsx`), en tres capas que se mueven distinto con el puntero y el scroll:
+  - **lejos**: un cielo nocturno con estrellas que titilan y se enlazan despacio en constelaciones violetas;
+  - **en medio**: **chispas** que suben desde el centro de abajo, como de la fogata, se mecen y se apagan al subir;
+  - **cerca**: figuras CSS 3D del tema: **leños** (prismas hexagonales), **brasas** (cubos) y un **anillo de guardianes** alrededor del fuego (giroscopio con 8 puntos encendidos).
+- Es completo en el Wall y la demo, y tranquilo (50 %) en perfiles, comparación y estadísticas. En celular hay la mitad de estrellas, chispas y figuras, DPR ≤ 2, pausa con la pestaña oculta y una escena quieta con movimiento reducido. Los colores salen de los tokens de "Twilight Ember" (`--violet`, `--ember`, `--amber`, `--spark`).
+- **No se hizo modo claro**, a propósito: el proyecto declara en `globals.css` "un solo mundo oscuro comprometido" (una fogata de noche). Se respeta esa decisión.
+
+### Checklist de 2 minutos en el celular
+
+1. Abre el Wall: suben chispas desde abajo, hay estrellas arriba y un anillo violeta gira en la esquina.
+2. El switch EN/ES se toca sin fallar y sus letras se leen.
+3. Los badges ("FIREKEEPER") y los números del podio se leen sin zoom.
+4. Abre un perfil de guardián: el fondo se calma.
+5. Sin scroll horizontal.
