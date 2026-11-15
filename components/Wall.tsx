@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
   motion,
   AnimatePresence,
-  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
-  useSpring,
-  useTransform,
   type Variants,
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Flame, Crown, ArrowUpRight, Search, ChevronDown, ChevronUp, Share2, Check } from "lucide-react";
+import {
+  Flame, Crown, ArrowUpRight, ArrowRight, Search, ChevronDown, ChevronUp, Share2, Check, Play, Info, Keyboard,
+  Armchair, Timer, Coins, Trophy, UserPlus, ServerCog,
+} from "lucide-react";
 import type { LeaderboardBundle, Guardian, Timeframe } from "@/lib/leaderboard";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
@@ -22,7 +22,7 @@ import { diffActivity } from "@/lib/activity";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
-import { LangToggle } from "./LangToggle";
+import { SiteHeader, RefugioMark } from "./SiteHeader";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 // Deep-linkable profile URL for a guardian.
@@ -34,13 +34,9 @@ const container: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.05, delayChildren: 0.06 } },
 };
-const rowItem: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 280, damping: 26 } },
-};
 const podiumItem: Variants = {
-  hidden: { opacity: 0, y: 28, scale: 0.9 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 260, damping: 24 } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
 };
 
 export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
@@ -146,7 +142,6 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
   const entries = frames[tf];
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3, 10);
-  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean) as Guardian[];
   const query = q.trim().toLowerCase();
   const anyMatch = query ? entries.some((e) => e.displayName.toLowerCase().includes(query)) : true;
   const leader = entries[0] ?? null;
@@ -242,341 +237,484 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onboardStep]);
 
+
+  const L = LOCAL[lang];
+  const totalRounds = entries.reduce((sum, g) => sum + (g.gamesPlayed ?? 0), 0);
+  const hasRounds = entries.some((g) => typeof g.gamesPlayed === "number");
+  const fade = (delay = 0) =>
+    reduce
+      ? {}
+      : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5, ease: EASE_OUT, delay } };
+
   return (
-    <main className="relative mx-auto min-h-dvh w-full max-w-3xl px-5 pb-24 pt-14 sm:pt-20">
-      <AmbientEmbers reduce={!!reduce} />
+    <>
+      <SiteHeader
+        lang={lang}
+        onToggleLang={handleLangClick}
+        reduce={!!reduce}
+        extra={
+          <button
+            type="button"
+            onClick={() => setShowShortcuts(true)}
+            aria-label={d.shortcuts.hint}
+            className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg border transition-colors hover:text-[var(--text)] lg:inline-flex"
+            style={{ borderColor: "var(--line)", background: "var(--ground-2)", color: "var(--text-3)" }}
+          >
+            <Keyboard size={16} aria-hidden />
+          </button>
+        }
+      />
       {leader && <LeaderBar leader={leader} d={d} reduce={!!reduce} newRecord={recordPulse} />}
       <EasterEggBurst active={easterEgg} />
-
-      {/* Language toggle + shortcuts help */}
-      <div className="relative z-10 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowShortcuts(true)}
-          aria-label={d.shortcuts.hint}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border font-mono-num text-[13px] font-semibold transition-colors hover:text-[var(--warm-white)]"
-          style={{ borderColor: "rgba(162, 129, 255, 0.55)", background: "rgba(139,124,255,0.08)", color: "var(--ash)" }}
-        >
-          ?
-        </button>
-        <LangToggle lang={lang} onClick={handleLangClick} reduce={!!reduce} />
-      </div>
       <ShortcutsHelp open={showShortcuts} onClose={() => setShowShortcuts(false)} d={d} />
       <OnboardingTour step={onboardStep} onNext={() => setOnboardStep((s) => (s === null ? null : s + 1))} onDismiss={dismissOnboarding} d={d} />
 
-      {/* Hero card — identity + CTA live inside one framed, glass-morphism surface instead of
-          floating directly on the page background. HeroGlow gives it real depth (a felt light
-          source, not just a flat panel) — this is the structural fix for "looks flat/plain,"
-          not another spacing tweak. */}
-      <motion.section
-        className="relative mt-8 overflow-hidden rounded-[28px] border px-6 py-10 text-center backdrop-blur-xl sm:px-12 sm:py-14"
-        initial={reduce ? undefined : { opacity: 0, y: 18 }}
-        animate={reduce ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE_OUT }}
-        style={{
-          // Previous values (28% border, background blended toward near-black) were nearly
-          // the same tone as the page itself — the card had no real contrast against its own
-          // background, so it read as a formless dark blob instead of a surface (confirmed via
-          // a real screenshot: "se ve todo bugueado" — no visible edge at all). Border opacity
-          // and background lightness both raised substantially so the card actually separates
-          // from the page instead of blending into it.
-          borderColor: "rgba(162, 129, 255, 0.55)",
-          background: "linear-gradient(180deg, rgba(34,23,51,0.92), rgba(20,14,32,0.94))",
-          boxShadow:
-            "0 40px 100px -35px rgba(139,124,255,0.55), 0 0 0 1px rgba(162,129,255,0.15), inset 0 1px 0 rgba(255,255,255,0.09)",
-        }}
-      >
-        <HeroGlow reduce={!!reduce} />
-
-        {/* Header — identity comes before the ask. A visitor should learn what this page IS
-            (Wall of Guardians) before being invited to go DO something (try the demo); leading
-            with the CTA put the action ahead of the introduction, which is what read as "off." */}
-        <header className="relative z-10">
-          <div
-            className="eyebrow inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5"
-            style={{ borderColor: "var(--line-violet)", background: "rgba(139,124,255,0.08)" }}
-          >
-            {bundle.source === "live" ? d.eyebrowLive : d.eyebrowPreview}
-            {staleConnection && (
-              <span className="font-mono-num normal-case tracking-normal" role="status">
-                ·{" "}
+      <main id="main" className="relative mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
+        {/* ------------------------------------------------------------ Hero */}
+        <section className="grid gap-10 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-12 lg:pt-24">
+          <div className="min-w-0 lg:col-span-7">
+            <motion.div {...fade(0)} className="flex flex-wrap items-center gap-2">
+              <span className="status-pill">
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: bundle.source === "live" ? "var(--ok)" : "var(--warn)" }}
+                />
+                {bundle.source === "live" ? L.live : L.preview}
+              </span>
+              <span className="status-pill">{L.platform}</span>
+              {staleConnection && (
                 <button
                   type="button"
+                  role="status"
                   onClick={() => void retryNow()}
                   disabled={retrying}
-                  className="underline decoration-dotted underline-offset-2 disabled:opacity-60"
-                  style={{ color: "var(--ash-dim)" }}
+                  className="status-pill min-h-11 underline decoration-dotted underline-offset-2 disabled:opacity-60"
                 >
                   {retrying ? d.retrying : `${d.reconnecting} · ${d.retryNow}`}
                 </button>
-              </span>
-            )}
-          </div>
-          <h1
-            className="font-serif-display mx-auto mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl"
-            style={{ textWrap: "balance" }}
-          >
-            {d.titlePre}{" "}
-            <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-[15px]" style={{ color: "var(--ash)" }}>
-            {d.subtitle}
-          </p>
-          <RotatingTagline items={d.taglines} reduce={!!reduce} />
-        </header>
-
-        {/* Play CTA — the natural next beat after the introduction, not competing with it. */}
-        <motion.div
-          initial={reduce ? undefined : { opacity: 0, y: -6 }}
-          animate={reduce ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE_OUT, delay: reduce ? 0 : 0.15 }}
-          className="relative z-10 mx-auto mt-8 max-w-sm"
-        >
-          <Link href="/demo" className="block">
-            <motion.div
-              whileHover={reduce ? undefined : { scale: 1.015 }}
-              whileTap={reduce ? undefined : { scale: 0.985 }}
-              animate={
-                reduce
-                  ? undefined
-                  : { boxShadow: ["0 10px 26px -14px rgba(255,150,60,0.65)", "0 10px 34px -10px rgba(255,180,80,0.85)", "0 10px 26px -14px rgba(255,150,60,0.65)"] }
-              }
-              transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }, default: { type: "spring", stiffness: 400, damping: 22 } }}
-              className="flex items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-center"
-              style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
-            >
-              <FlickerFlame />
-              <span className="text-[15px] font-bold sm:text-[16px]">{d.cta.demo}</span>
+              )}
             </motion.div>
-          </Link>
-        </motion.div>
-      </motion.section>
 
-      {/* Controls: filters + search */}
-      <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Filters d={d} tf={tf} setTf={setTf} reduce={!!reduce} />
-        <SearchBox d={d} q={q} setQ={setQ} entries={entries} inputRef={searchInputRef} />
+            <motion.h1
+              {...fade(0.05)}
+              className="font-serif-display mt-6 text-[44px] font-medium leading-[1.02] sm:text-[64px] lg:text-[76px]"
+              style={{ color: "var(--text)" }}
+            >
+              {d.titlePre} <span style={{ color: "var(--ember)" }}>{d.titleEm}</span>
+            </motion.h1>
+
+            <motion.p {...fade(0.1)} className="mt-6 max-w-xl text-[17px] leading-relaxed sm:text-[18px]" style={{ color: "var(--text-2)" }}>
+              {d.subtitle}
+            </motion.p>
+            <RotatingTagline items={d.taglines} reduce={!!reduce} />
+
+            <motion.div {...fade(0.15)} className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/demo" className="btn btn-primary whitespace-normal text-center" style={{ minHeight: 48, padding: "0 22px", fontSize: 16 }}>
+                <Play size={16} fill="currentColor" aria-hidden />
+                {d.cta.demo}
+              </Link>
+              <a href="#how" className="btn btn-secondary whitespace-normal text-center" style={{ minHeight: 48, padding: "0 20px", fontSize: 16 }}>
+                {d.howTitle}
+                <ArrowRight size={16} aria-hidden style={{ color: "var(--text-3)" }} />
+              </a>
+            </motion.div>
+          </div>
+
+          <motion.aside {...fade(0.12)} className="min-w-0 lg:col-span-5" aria-label={d.leading}>
+            <LeaderPanel
+              leader={leader}
+              d={d}
+              L={L}
+              tfLabel={d.filters[tf]}
+              guardians={entries.length}
+              totalBrasas={totalBrasas}
+              totalRounds={hasRounds ? totalRounds : null}
+              source={bundle.source}
+              reduce={!!reduce}
+              newRecord={recordPulse}
+            />
+          </motion.aside>
+        </section>
+
+        {/* ----------------------------------------------------- Leaderboard */}
+        <section id="leaderboard" className="mt-20 scroll-mt-24 sm:mt-28" aria-labelledby="lb-title">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="eyebrow">{L.lbEyebrow}</div>
+              <h2 id="lb-title" className="font-serif-display mt-2 text-[32px] font-medium leading-tight sm:text-[40px]">
+                {L.lbTitle}
+              </h2>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Filters d={d} tf={tf} setTf={setTf} reduce={!!reduce} />
+              <SearchBox d={d} q={q} setQ={setQ} entries={entries} inputRef={searchInputRef} />
+            </div>
+          </div>
+
+          <ErrorBoundary fallback={<LeaderboardFallback d={d} />}>
+            {empty ? (
+              <EmptyState d={d} />
+            ) : (
+              <div className="panel mt-6 overflow-hidden">
+                {/* Top three — one row of three cells, rank order left to right */}
+                <motion.ol key={`podium-${tf}`} className="grid sm:grid-cols-3" {...anim(container)}>
+                  {top3.map((g, i) => (
+                    <PodiumCell
+                      key={g.displayName}
+                      guardian={g}
+                      rank={i}
+                      d={d}
+                      reduce={!!reduce}
+                      match={!!query && g.displayName.toLowerCase().includes(query)}
+                      dim={!!query && !g.displayName.toLowerCase().includes(query)}
+                      newRecord={i === 0 && recordPulse}
+                    />
+                  ))}
+                </motion.ol>
+
+                {rest.length > 0 && (
+                  <>
+                    <div
+                      className="hidden grid-cols-[56px_1fr_160px_120px_48px] items-center border-t px-4 py-3 sm:grid"
+                      style={{ borderColor: "var(--line)", background: "var(--ground-2)" }}
+                      aria-hidden
+                    >
+                      <span className="eyebrow">#</span>
+                      <span className="eyebrow">{L.colGuardian}</span>
+                      <span className="eyebrow">{L.colTier}</span>
+                      <span className="eyebrow text-right">{L.colEmbers}</span>
+                      <span />
+                    </div>
+                    <motion.ol layout={!reduce}>
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {rest.map((g) => {
+                          const rank = entries.indexOf(g);
+                          const match = !!query && g.displayName.toLowerCase().includes(query);
+                          const isOpen = expanded === g.displayName;
+                          return (
+                            <motion.li
+                              key={g.displayName}
+                              layout={!reduce}
+                              initial={reduce ? undefined : { opacity: 0 }}
+                              animate={reduce ? undefined : { opacity: query && !match ? 0.4 : 1 }}
+                              exit={reduce ? undefined : { opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="border-t"
+                              style={{ borderColor: "var(--line)", background: match ? "var(--ember-tint)" : "transparent" }}
+                            >
+                              <div className="flex items-stretch">
+                                <Link
+                                  href={guardianHref(g.displayName)}
+                                  className="grid min-h-14 min-w-0 flex-1 grid-cols-[40px_1fr_auto] items-center gap-3 px-4 transition-colors hover:bg-[var(--surface-2)] sm:grid-cols-[40px_1fr_160px_120px] sm:gap-0"
+                                >
+                                  <span className="flex items-center gap-1">
+                                    <span className="font-mono-num text-[14px]" style={{ color: "var(--text-3)" }}>
+                                      {String(rank + 1).padStart(2, "0")}
+                                    </span>
+                                    <RankChangeArrow delta={rankDelta[g.displayName]} />
+                                  </span>
+                                  <span className="flex min-w-0 items-center gap-3 sm:pl-4">
+                                    <span className="hidden min-[400px]:inline-flex">
+                                      <GuardianDot name={g.displayName} />
+                                    </span>
+                                    <span className="truncate text-[15px] font-medium" style={{ color: "var(--text)" }}>
+                                      {g.displayName}
+                                    </span>
+                                  </span>
+                                  <span className="hidden sm:block">
+                                    <Badge brasas={g.brasas} d={d} />
+                                  </span>
+                                  <span className="flex justify-end">
+                                    <Brasas value={g.brasas} reduce={!!reduce} />
+                                  </span>
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={() => setExpanded((prev) => (prev === g.displayName ? null : g.displayName))}
+                                  aria-expanded={isOpen}
+                                  aria-label={`${d.profile.roundsPlayed} — ${g.displayName}`}
+                                  className="flex w-12 shrink-0 items-center justify-center transition-colors hover:text-[var(--text)]"
+                                  style={{ color: "var(--text-3)" }}
+                                >
+                                  <motion.span
+                                    style={{ display: "inline-flex" }}
+                                    animate={{ rotate: isOpen ? 180 : 0 }}
+                                    transition={{ duration: 0.2, ease: EASE_OUT }}
+                                  >
+                                    <ChevronDown size={16} />
+                                  </motion.span>
+                                </button>
+                              </div>
+                              <AnimatePresence initial={false}>
+                                {isOpen && (
+                                  <motion.div
+                                    initial={reduce ? undefined : { opacity: 0, height: 0 }}
+                                    animate={reduce ? undefined : { opacity: 1, height: "auto" }}
+                                    exit={reduce ? undefined : { opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2, ease: EASE_OUT }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div
+                                      className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:pl-[72px]"
+                                      style={{ borderColor: "var(--line)", background: "var(--ground-2)" }}
+                                    >
+                                      <span className="flex items-center gap-3 text-[14px]" style={{ color: "var(--text-2)" }}>
+                                        <span className="sm:hidden">
+                                          <Badge brasas={g.brasas} d={d} />
+                                        </span>
+                                        {typeof g.gamesPlayed === "number" ? `${g.gamesPlayed} ${d.rounds}` : d.profile.roundsPlayed}
+                                      </span>
+                                      <Link href={guardianHref(g.displayName)} className="link inline-flex min-h-11 items-center gap-1 text-[14px]">
+                                        {d.profile.viewFull}
+                                        <ArrowUpRight size={14} aria-hidden />
+                                      </Link>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.li>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </motion.ol>
+                  </>
+                )}
+
+                {query && !anyMatch && (
+                  <p className="border-t px-4 py-4 text-[14px]" style={{ borderColor: "var(--line)", color: "var(--text-3)" }}>
+                    {d.noResults}
+                  </p>
+                )}
+
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2"
+                  style={{ borderColor: "var(--line)", background: "var(--ground-2)" }}
+                >
+                  <span className="text-[13px]" style={{ color: "var(--text-3)" }}>
+                    {L.showing.replace("{n}", String(Math.min(entries.length, 10))).replace("{t}", String(entries.length))}
+                  </span>
+                  <span className="flex items-center gap-4">
+                    <Link href="/stats" className="link inline-flex min-h-11 items-center text-[14px]">
+                      {L.stats}
+                    </Link>
+                    <Link href="/guardians" className="link inline-flex min-h-11 items-center gap-1 text-[14px]">
+                      {d.viewAllGuardians}
+                      <ArrowRight size={14} aria-hidden />
+                    </Link>
+                  </span>
+                </div>
+
+                {/* Screen-reader table: the leaderboard as structured data. */}
+                <table className="sr-only">
+                  <caption>{`${d.titlePre} ${d.titleEm} — ${d.filters[tf]}`}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">{d.titleEm}</th>
+                      <th scope="col">{d.brasas}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries.map((g, i) => (
+                      <tr key={g.displayName}>
+                        <td>{i + 1}</td>
+                        <td>{g.displayName}</td>
+                        <td>{g.brasas}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </ErrorBoundary>
+
+          <ActivityFeed items={activity} title={d.activityFeed.title} reduce={!!reduce} />
+        </section>
+
+        <HowItWorks d={d} L={L} reduce={!!reduce} />
+
+        <SiteFooter
+          d={d}
+          L={L}
+          source={bundle.source}
+          guardians={entries.length}
+          totalBrasas={totalBrasas}
+          reduce={!!reduce}
+        />
+      </main>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------- Local copy */
+
+// Strings only this redesigned page uses — kept beside it rather than widening the shared Dict.
+const LOCAL = {
+  en: {
+    live: "Live data",
+    preview: "Preview · sample data",
+    platform: "Decentraland companion",
+    lbEyebrow: "Standings",
+    lbTitle: "Leaderboard",
+    colGuardian: "Guardian",
+    colTier: "Tier",
+    colEmbers: "Embers",
+    showing: "Top {n} of {t} guardians",
+    stats: "Community stats",
+    metricGuardians: "Guardians",
+    metricEmbers: "Total embers",
+    metricRounds: "Rounds played",
+    viewProfile: "View profile",
+    noLeader: "No guardian has lit the fire yet.",
+    howLead: "Seven systems, one rule: the fire only burns while people are present.",
+    tryCell: "Feel the mechanic before you visit the scene — no install, no wallet.",
+    footerAbout: "A public leaderboard for Refugio, a campfire scene in Decentraland that grows with the people sitting around it.",
+    explore: "Explore",
+    project: "Project",
+    community: "Community",
+    built: "Built on Decentraland SDK7",
+  },
+  es: {
+    live: "Datos en vivo",
+    preview: "Vista previa · datos de muestra",
+    platform: "Compañero de Decentraland",
+    lbEyebrow: "Posiciones",
+    lbTitle: "Clasificación",
+    colGuardian: "Guardián",
+    colTier: "Rango",
+    colEmbers: "Brasas",
+    showing: "Top {n} de {t} guardianes",
+    stats: "Estadísticas",
+    metricGuardians: "Guardianes",
+    metricEmbers: "Brasas totales",
+    metricRounds: "Rondas jugadas",
+    viewProfile: "Ver perfil",
+    noLeader: "Ningún guardián ha encendido el fuego todavía.",
+    howLead: "Siete sistemas, una regla: el fuego solo arde mientras hay gente presente.",
+    tryCell: "Siente la mecánica antes de visitar la escena: sin instalar nada, sin wallet.",
+    footerAbout: "Clasificación pública de Refugio, una fogata en Decentraland que crece con la gente sentada alrededor.",
+    explore: "Explorar",
+    project: "Proyecto",
+    community: "Comunidad",
+    built: "Hecho con Decentraland SDK7",
+  },
+} as const;
+type Local = (typeof LOCAL)["en"] | (typeof LOCAL)["es"];
+
+/* ------------------------------------------------------------ Leader panel */
+
+function LeaderPanel({
+  leader,
+  d,
+  L,
+  tfLabel,
+  guardians,
+  totalBrasas,
+  totalRounds,
+  source,
+  reduce,
+  newRecord,
+}: {
+  leader: Guardian | null;
+  d: Dict;
+  L: Local;
+  tfLabel: string;
+  guardians: number;
+  totalBrasas: number;
+  totalRounds: number | null;
+  source: LeaderboardBundle["source"];
+  reduce: boolean;
+  newRecord: boolean;
+}) {
+  return (
+    <div className="panel overflow-hidden" style={{ boxShadow: "var(--shadow-2)" }}>
+      <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--line)" }}>
+        <span className="flex items-center gap-2 text-[14px] font-medium" style={{ color: "var(--text-2)" }}>
+          <span className="relative inline-flex">
+            <Crown size={15} aria-hidden style={{ color: "var(--gold)" }} />
+            <RecordBurst active={newRecord && !reduce} />
+          </span>
+          {d.leading}
+        </span>
+        <span className="font-mono-num text-[12px]" style={{ color: "var(--text-3)" }}>
+          {tfLabel}
+        </span>
       </div>
 
-      <ErrorBoundary fallback={<LeaderboardFallback d={d} />}>
-      {empty ? (
-        <EmptyState d={d} reduce={!!reduce} />
+      {leader ? (
+        <Link href={guardianHref(leader.displayName)} className="group block px-5 pb-6 pt-5 transition-colors hover:bg-[var(--surface-2)]">
+          <div className="flex items-center gap-3">
+            <GuardianDot name={leader.displayName} big />
+            <div className="min-w-0">
+              <div className="font-serif-display truncate text-[26px] font-medium leading-tight" style={{ color: "var(--text)" }}>
+                {leader.displayName}
+              </div>
+              <div className="mt-1">
+                <Badge brasas={leader.brasas} d={d} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 flex items-end justify-between gap-4">
+            <div>
+              <div className="eyebrow">{d.brasas}</div>
+              <TickerNumber
+                value={leader.brasas}
+                reduce={reduce}
+                className="font-mono-num mt-1 block text-[44px] font-medium leading-none tracking-tight"
+              />
+            </div>
+            <span className="inline-flex min-h-11 items-center gap-1 text-[14px] transition-colors group-hover:text-[var(--text)]" style={{ color: "var(--text-3)" }}>
+              {L.viewProfile}
+              <ArrowUpRight size={14} aria-hidden />
+            </span>
+          </div>
+        </Link>
       ) : (
-        <>
-      {/* Podium */}
-      <motion.section
-        key={`podium-${tf}`}
-        className="relative mt-8 grid grid-cols-3 items-end gap-3 sm:gap-4"
-        {...anim(container)}
-      >
-        {podiumOrder.map((g) => {
-          const rank = entries.indexOf(g);
-          return (
-            <PodiumCard
-              key={g.displayName}
-              guardian={g}
-              rank={rank}
-              reduce={!!reduce}
-              d={d}
-              match={!!query && g.displayName.toLowerCase().includes(query)}
-              newRecord={rank === 0 && recordPulse}
-            />
-          );
-        })}
-      </motion.section>
-
-      {/* The rest — reorders with layout animation on filter change; 2 columns on large screens */}
-      <motion.ol
-        className="relative z-10 mt-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3"
-        layout={!reduce}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          {rest.map((g) => {
-            const rank = entries.indexOf(g);
-            const match = !!query && g.displayName.toLowerCase().includes(query);
-            const isOpen = expanded === g.displayName;
-            return (
-              <motion.li
-                key={g.displayName}
-                layout={!reduce}
-                variants={reduce ? undefined : rowItem}
-                initial={reduce ? undefined : { opacity: 0, y: 14 }}
-                animate={reduce ? undefined : { opacity: query && !match ? 0.4 : 1, y: 0 }}
-                exit={reduce ? undefined : { opacity: 0, y: -10 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className="overflow-hidden rounded-xl border"
-                style={{
-                  borderColor: match ? "var(--line-violet)" : "var(--line)",
-                  background: match
-                    ? "linear-gradient(180deg, rgba(162,129,255,0.10), var(--ground-2))"
-                    : "linear-gradient(180deg, var(--surface), var(--ground-2))",
-                }}
-              >
-                <div className="flex items-center">
-                  <Link
-                    href={guardianHref(g.displayName)}
-                    className="flex min-w-0 flex-1 items-center gap-4 px-4 py-3.5"
-                    style={{ color: "inherit", textDecoration: "none" }}
-                  >
-                    <span className="flex w-7 shrink-0 items-center justify-center gap-0.5">
-                      <span className="font-mono-num text-center text-sm" style={{ color: "var(--ash-dim)" }}>
-                        {rank + 1}
-                      </span>
-                      <RankChangeArrow delta={rankDelta[g.displayName]} />
-                    </span>
-                    <GuardianDot />
-                    <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <span className="truncate text-[15px]" style={{ color: "var(--warm-white)" }}>
-                        {g.displayName}
-                      </span>
-                      <Badge brasas={g.brasas} d={d} />
-                    </span>
-                    <Brasas value={g.brasas} reduce={!!reduce} />
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setExpanded((prev) => (prev === g.displayName ? null : g.displayName))}
-                    aria-expanded={isOpen}
-                    aria-label={d.profile.roundsPlayed}
-                    className="flex min-w-11 shrink-0 items-center justify-center self-stretch px-3 transition-colors hover:text-[var(--warm-white)]"
-                    style={{ color: "var(--ash-dim)", background: "transparent", border: "none", cursor: "pointer" }}
-                  >
-                    <motion.span
-                      style={{ display: "inline-flex" }}
-                      animate={{ rotate: isOpen ? 180 : 0 }}
-                      transition={{ duration: 0.25, ease: EASE_OUT }}
-                    >
-                      <ChevronDown size={16} />
-                    </motion.span>
-                  </button>
-                </div>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={reduce ? undefined : { opacity: 0, height: 0 }}
-                      animate={reduce ? undefined : { opacity: 1, height: "auto" }}
-                      exit={reduce ? undefined : { opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25, ease: EASE_OUT }}
-                    >
-                      <div
-                        className="flex items-center justify-between border-t px-4 py-3"
-                        style={{ borderColor: "var(--line)" }}
-                      >
-                        <span className="text-[13px]" style={{ color: "var(--ash)" }}>
-                          {typeof g.gamesPlayed === "number" ? `${g.gamesPlayed} ${d.rounds}` : d.profile.roundsPlayed}
-                        </span>
-                        <Link
-                          href={guardianHref(g.displayName)}
-                          className="inline-flex items-center gap-1 text-[13px] font-medium transition-colors hover:text-[var(--spark)]"
-                          style={{ color: "var(--amber)" }}
-                        >
-                          {d.profile.viewFull}
-                          <ArrowUpRight size={13} />
-                        </Link>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.li>
-            );
-          })}
-        </AnimatePresence>
-      </motion.ol>
-
-      {query && !anyMatch && (
-        <p className="relative z-10 mt-4 text-center text-[14px]" style={{ color: "var(--ash-dim)" }}>
-          {d.noResults}
+        <p className="px-5 py-8 text-[15px]" style={{ color: "var(--text-2)" }}>
+          {L.noLeader}
         </p>
       )}
 
-      {entries.length > 10 && (
-        <div className="relative z-10 mt-5 flex justify-center">
-          <Link
-            href="/guardians"
-            className="inline-flex min-h-11 items-center gap-1 text-[13px] font-medium transition-colors hover:text-[var(--spark)]"
-            style={{ color: "var(--amber)" }}
-          >
-            {d.viewAllGuardians}
-            <ArrowUpRight size={13} />
-          </Link>
+      <dl className="grid grid-cols-3 border-t" style={{ borderColor: "var(--line)" }}>
+        <Metric label={L.metricGuardians} value={guardians} reduce={reduce} />
+        <Metric label={L.metricEmbers} value={totalBrasas} reduce={reduce} border />
+        {totalRounds !== null ? (
+          <Metric label={L.metricRounds} value={totalRounds} reduce={reduce} border />
+        ) : (
+          <div className="border-l px-4 py-4" style={{ borderColor: "var(--line)" }}>
+            <dt className="text-[12px]" style={{ color: "var(--text-3)" }}>{L.metricRounds}</dt>
+            <dd className="font-mono-num mt-1 text-[20px]" style={{ color: "var(--text-3)" }}>—</dd>
+          </div>
+        )}
+      </dl>
+
+      {source !== "live" && (
+        <div className="flex gap-2.5 border-t px-5 py-3.5 text-[13px] leading-snug" style={{ borderColor: "var(--line)", background: "var(--ground-2)", color: "var(--text-3)" }}>
+          <Info size={15} aria-hidden className="mt-px shrink-0" />
+          <span>{d.footerPreview}</span>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Screen-reader table: the leaderboard as structured data (visuals alone aren't
-          screen-reader friendly — WCAG). Hidden visually, announced to assistive tech. */}
-      <table className="sr-only">
-        <caption>{`${d.titlePre} ${d.titleEm} — ${d.filters[tf]}`}</caption>
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">{d.titleEm}</th>
-            <th scope="col">{d.brasas}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((g, i) => (
-            <tr key={g.displayName}>
-              <td>{i + 1}</td>
-              <td>{g.displayName}</td>
-              <td>{g.brasas}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-        </>
-      )}
-      </ErrorBoundary>
-
-      <ActivityFeed items={activity} title={d.activityFeed.title} reduce={!!reduce} />
-
-      <HowItWorks d={d} reduce={!!reduce} />
-
-      {/* Footer — brand, live stats, and links as three real columns instead of one stacked
-          line; gives the page a floor instead of just trailing off after the last card. */}
-      <motion.footer
-        className="relative z-10 mt-16 border-t pt-10"
-        style={{ borderColor: "var(--line)" }}
-        initial={reduce ? undefined : { opacity: 0 }}
-        whileInView={reduce ? undefined : { opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="grid grid-cols-1 gap-8 text-center sm:grid-cols-3 sm:text-left">
-          <div className="flex flex-col items-center sm:items-start">
-            <div className="flex items-center gap-2">
-              <span aria-hidden style={{ fontSize: 17 }}>🔥</span>
-              <span className="font-serif-display text-[15px] font-semibold" style={{ color: "var(--warm-white)" }}>
-                Refugio
-              </span>
-            </div>
-            <p className="mt-2 max-w-[220px] text-[12.5px]" style={{ color: "var(--ash-dim)" }}>
-              {bundle.source === "live" ? d.footerLive : d.footerPreview}
-            </p>
-          </div>
-
-          <Link href="/stats" className="flex flex-col items-center gap-2 sm:items-start" style={{ color: "inherit", textDecoration: "none" }}>
-            <FooterStat label={d.footerStats.guardians} value={entries.length} reduce={!!reduce} />
-            <FooterStat label={d.footerStats.totalBrasas} value={totalBrasas} reduce={!!reduce} />
-          </Link>
-
-          <div className="flex flex-wrap justify-center gap-2.5 sm:justify-start">
-            <FooterLink label={d.cta.sceneSoon} disabled />
-            <FooterLink href="/demo" label={d.cta.demo} />
-            <FooterLink href="https://github.com/ALFA117/Refugio" label={d.cta.github} external />
-            <WallShareButton d={d} />
-          </div>
-        </div>
-        <div className="mt-10 text-center font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
-          REFUGIO · 🔥 · BUILT ON DECENTRALAND
-        </div>
-      </motion.footer>
-    </main>
+function Metric({ label, value, reduce, border = false }: { label: string; value: number; reduce: boolean; border?: boolean }) {
+  return (
+    <div className={`px-4 py-4 ${border ? "border-l" : ""}`} style={{ borderColor: "var(--line)" }}>
+      <dt className="text-[12px] leading-tight" style={{ color: "var(--text-3)" }}>
+        {label}
+      </dt>
+      <dd className="mt-1">
+        <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[20px] font-medium" />
+      </dd>
+    </div>
   );
 }
 
 /* --------------------------------------------------- Sticky leader + empty */
 
-// When the podium scrolls out of view, a slim bar keeps the current #1 in sight.
+// When the hero scrolls out of view, a slim bar at the bottom keeps the current #1 in sight.
 function LeaderBar({
   leader,
   d,
@@ -590,59 +728,47 @@ function LeaderBar({
 }) {
   const { scrollY } = useScroll();
   const [shown, setShown] = useState(false);
-  useMotionValueEvent(scrollY, "change", (v) => setShown(v > 360));
+  useMotionValueEvent(scrollY, "change", (v) => setShown(v > 640));
   return (
     <AnimatePresence>
       {shown && (
         <motion.div
-          initial={reduce ? { opacity: 0 } : { y: -60, opacity: 0 }}
+          initial={reduce ? { opacity: 0 } : { y: 24, opacity: 0 }}
           animate={reduce ? { opacity: 1 } : { y: 0, opacity: 1 }}
-          exit={reduce ? { opacity: 0 } : { y: -60, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 320, damping: 30 }}
-          className="fixed inset-x-0 top-0 z-40"
+          exit={reduce ? { opacity: 0 } : { y: 24, opacity: 0 }}
+          transition={{ duration: 0.25, ease: EASE_OUT }}
+          className="pointer-events-none fixed inset-x-0 z-30 px-4"
+          style={{ bottom: "max(16px, env(safe-area-inset-bottom))" }}
         >
-          <div className="mx-auto max-w-3xl px-5 pt-3">
-            <Link
-              href={guardianHref(leader.displayName)}
-              className="flex min-h-11 items-center gap-3 rounded-full border px-4 backdrop-blur"
-              style={{
-                borderColor: "var(--line-violet)",
-                background: "linear-gradient(90deg, rgba(25,17,40,0.92), rgba(20,14,32,0.92))",
-                color: "inherit",
-                textDecoration: "none",
-                boxShadow: "0 12px 40px -20px rgba(0,0,0,0.8)",
-              }}
-            >
-              <span style={{ position: "relative", display: "inline-flex" }}>
-                <Crown size={16} strokeWidth={1.7} style={{ color: "var(--gold)" }} />
-                <RecordBurst active={newRecord && !reduce} />
-              </span>
-              <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
-                {d.leading}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: "var(--warm-white)" }}>
-                {leader.displayName}
-              </span>
-              <span className="flex items-center gap-1.5" style={{ color: "var(--spark)" }}>
-                <Flame size={14} strokeWidth={1.8} />
-                <span className="font-mono-num text-[13px] font-medium">{leader.brasas.toLocaleString()}</span>
-              </span>
-            </Link>
-          </div>
+          <Link
+            href={guardianHref(leader.displayName)}
+            className="pointer-events-auto mx-auto flex min-h-12 max-w-md items-center gap-3 rounded-xl border px-4"
+            style={{ borderColor: "var(--line-strong)", background: "var(--surface-2)", boxShadow: "0 12px 32px -16px rgba(0,0,0,0.9)" }}
+          >
+            <span className="relative inline-flex">
+              <Crown size={15} aria-hidden style={{ color: "var(--gold)" }} />
+              <RecordBurst active={newRecord && !reduce} />
+            </span>
+            <span className="text-[13px]" style={{ color: "var(--text-3)" }}>
+              {d.leading}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[15px] font-medium" style={{ color: "var(--text)" }}>
+              {leader.displayName}
+            </span>
+            <Brasas value={leader.brasas} reduce={reduce} accent />
+          </Link>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
 
-// Shown when there are no guardians yet (e.g. KV is live but the scene hasn't pushed a round).
 // A handful of "X just happened" lines synthesized from live-poll diffs (see pollLeaderboard).
-// Naturally empty in sample mode (no polling happens), so it renders nothing there rather than
-// showing a permanently-empty "Just happened" box with nothing under it.
+// Naturally empty in sample mode (no polling happens), so it renders nothing there.
 function ActivityFeed({ items, title, reduce }: { items: { id: string; text: string }[]; title: string; reduce: boolean }) {
   if (items.length === 0) return null;
   return (
-    <div className="card relative z-10 mt-6 p-4">
+    <div className="panel mt-4 p-4">
       <div className="eyebrow">{title}</div>
       <ul className="mt-2.5 flex flex-col gap-1.5">
         <AnimatePresence initial={false}>
@@ -654,8 +780,8 @@ function ActivityFeed({ items, title, reduce }: { items: { id: string; text: str
               animate={reduce ? undefined : { opacity: 1, x: 0 }}
               exit={reduce ? undefined : { opacity: 0 }}
               transition={{ duration: 0.3, ease: EASE_OUT }}
-              className="text-[13px]"
-              style={{ color: "var(--ash)" }}
+              className="text-[14px]"
+              style={{ color: "var(--text-2)" }}
             >
               {item.text}
             </motion.li>
@@ -666,67 +792,40 @@ function ActivityFeed({ items, title, reduce }: { items: { id: string; text: str
   );
 }
 
-// Shown if the podium/rows section throws — points at the full roster instead of leaving a
-// blank gap where the leaderboard should be, so the rest of the page (header, CTA, footer)
-// stays usable even if this specific section crashes.
+// Shown if the leaderboard section throws — points at the full roster instead of a blank gap.
 function LeaderboardFallback({ d }: { d: Dict }) {
   return (
-    <div className="relative z-10 mt-10 flex flex-col items-center gap-3 text-center">
-      <p className="text-[14px]" style={{ color: "var(--ash-dim)" }}>
+    <div className="panel mt-6 flex flex-col items-start gap-3 p-6" role="alert">
+      <p className="text-[15px]" style={{ color: "var(--text-2)" }}>
         {d.leaderboardError}
       </p>
-      <Link
-        href="/guardians"
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-[13px] font-medium transition-colors hover:border-[var(--amber)]"
-        style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
-      >
+      <Link href="/guardians" className="btn btn-secondary">
         {d.viewAllGuardians}
-        <ArrowUpRight size={13} />
+        <ArrowUpRight size={14} aria-hidden />
       </Link>
     </div>
   );
 }
 
-function EmptyState({ d, reduce }: { d: Dict; reduce: boolean }) {
+function EmptyState({ d }: { d: Dict }) {
   return (
-    <div className="relative z-10 mt-20 flex flex-col items-center text-center">
-      <div
-        className="flex items-center justify-center rounded-full"
-        style={{
-          width: 72,
-          height: 72,
-          background: "radial-gradient(circle at 35% 30%, rgba(255,214,107,0.22), rgba(255,122,45,0.06) 72%)",
-          border: "1px solid var(--line)",
-        }}
-      >
-        <svg width="30" height="34" viewBox="0 0 24 28" aria-hidden>
-          <motion.g
-            style={{ transformOrigin: "50% 100%" }}
-            animate={reduce ? undefined : { scaleY: [1, 1.05, 0.96, 1.03, 1], rotate: [0, -2, 1.5, -1, 0] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <path
-              d="M12 2C12 2 4 12 4 18C4 22.4 7.6 26 12 26C16.4 26 20 22.4 20 18C20 12 12 2 12 2Z"
-              fill="var(--ember)"
-              opacity={0.4}
-            />
-            <path
-              d="M12 12C12 12 8.5 17 8.5 20C8.5 22.2 10.1 24 12 24C13.9 24 15.5 22.2 15.5 20C15.5 17 12 12 12 12Z"
-              fill="var(--spark)"
-              opacity={0.7}
-            />
-          </motion.g>
-        </svg>
-      </div>
-      <p className="mt-5 max-w-xs text-[15px]" style={{ color: "var(--ash)" }}>
+    <div className="panel mt-6 flex flex-col items-center px-6 py-14 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl border" style={{ borderColor: "var(--line-strong)", background: "var(--surface-2)" }}>
+        <Flame size={20} aria-hidden style={{ color: "var(--ember)" }} />
+      </span>
+      <p className="mt-4 max-w-xs text-[15px]" style={{ color: "var(--text-2)" }}>
         {d.emptyState}
       </p>
+      <Link href="/demo" className="btn btn-secondary mt-5">
+        <Play size={14} aria-hidden />
+        {d.cta.demo}
+      </Link>
     </div>
   );
 }
 
-// Rotates through a short set of one-line taglines beneath the subtitle. Frozen on the
-// first line when reduced-motion is requested — purely decorative motion, not information.
+// Rotates through a short set of one-line taglines beneath the subtitle. Static under
+// reduced-motion — purely decorative motion, not information.
 function RotatingTagline({ items, reduce }: { items: string[]; reduce: boolean }) {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -735,34 +834,27 @@ function RotatingTagline({ items, reduce }: { items: string[]; reduce: boolean }
     return () => clearInterval(id);
   }, [items.length, reduce]);
 
-  if (reduce) {
-    return (
-      <div className="mt-3 font-mono-num text-[12px] tracking-wide" style={{ color: "var(--violet)" }}>
-        {items[0]}
-      </div>
-    );
-  }
   return (
-    <div className="relative z-10 mt-3 flex h-5 items-center justify-center">
-      <AnimatePresence mode="wait">
+    <div className="mt-4 flex h-6 items-center gap-2.5 overflow-hidden">
+      <span aria-hidden className="h-px w-6 shrink-0" style={{ background: "var(--line-ember)" }} />
+      <AnimatePresence mode="wait" initial={false}>
         <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.4, ease: EASE_OUT }}
-          className="font-mono-num text-[12px] tracking-wide"
-          style={{ color: "var(--violet)" }}
+          key={reduce ? 0 : i}
+          initial={reduce ? undefined : { opacity: 0, y: 6 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          exit={reduce ? undefined : { opacity: 0, y: -6 }}
+          transition={{ duration: 0.3, ease: EASE_OUT }}
+          className="truncate font-mono-num text-[13px]"
+          style={{ color: "var(--text-3)" }}
         >
-          {items[i]}
+          {items[reduce ? 0 : i]}
         </motion.span>
       </AnimatePresence>
     </div>
   );
 }
 
-// A few concentric rings burst outward from an icon-sized parent when a new record lands.
-// Purely additive visual feedback — the number itself already updates regardless.
+// Concentric rings burst outward from an icon-sized parent when a new record lands.
 function RecordBurst({ active }: { active: boolean }) {
   if (!active) return null;
   return (
@@ -771,7 +863,7 @@ function RecordBurst({ active }: { active: boolean }) {
         <motion.span
           key={i}
           className="absolute inset-0 rounded-full"
-          style={{ border: "2px solid var(--spark)" }}
+          style={{ border: "1.5px solid var(--gold)" }}
           initial={{ scale: 0.6, opacity: 0.85 }}
           animate={{ scale: 1.9, opacity: 0 }}
           transition={{ duration: 1.1, delay: i * 0.18, ease: "easeOut" }}
@@ -781,7 +873,7 @@ function RecordBurst({ active }: { active: boolean }) {
   );
 }
 
-// Hidden easter egg payoff: a burst of embers flying outward from the center of the screen.
+// Hidden easter egg payoff (5 rapid taps on the language switch): a short burst of embers.
 function EasterEggBurst({ active }: { active: boolean }) {
   return (
     <AnimatePresence>
@@ -799,12 +891,7 @@ function EasterEggBurst({ active }: { active: boolean }) {
               <motion.span
                 key={i}
                 className="absolute rounded-full"
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: i % 2 === 0 ? "var(--spark)" : "var(--ember)",
-                  boxShadow: "0 0 12px rgba(255,150,60,0.8)",
-                }}
+                style={{ width: 6, height: 6, background: i % 2 === 0 ? "var(--spark)" : "var(--ember)" }}
                 initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                 animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, opacity: 0, scale: 0.3 }}
                 transition={{ duration: 1.1, ease: "easeOut" }}
@@ -836,11 +923,7 @@ function Filters({
     { key: "today", label: d.filters.today },
   ];
   return (
-    <div
-      className="inline-flex rounded-full border p-1"
-      style={{ borderColor: "var(--line)", background: "var(--surface)" }}
-      role="tablist"
-    >
+    <div className="segmented w-full sm:w-auto" role="tablist" aria-label={d.filters.all}>
       {opts.map((o) => {
         const active = tf === o.key;
         return (
@@ -849,15 +932,15 @@ function Filters({
             role="tab"
             aria-selected={active}
             onClick={() => setTf(o.key)}
-            className="relative flex min-h-11 items-center justify-center rounded-full px-3.5 text-[13px] font-medium transition-colors"
-            style={{ color: active ? "#1a0d04" : "var(--ash)" }}
+            className="relative flex min-h-10 flex-1 items-center justify-center whitespace-nowrap rounded-[7px] px-2 text-[14px] sm:px-3.5 font-medium transition-colors sm:flex-none"
+            style={{ color: active ? "var(--text)" : "var(--text-3)", minHeight: 40 }}
           >
             {active && (
               <motion.span
                 layoutId={reduce ? undefined : "filter-pill"}
-                className="absolute inset-0 rounded-full"
-                style={{ background: "linear-gradient(90deg, var(--ember), var(--amber))" }}
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                className="absolute inset-0 rounded-[7px]"
+                style={{ background: "var(--surface-3)", boxShadow: "inset 0 0 0 1px var(--line-strong)" }}
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
               />
             )}
             <span className="relative z-10">{o.label}</span>
@@ -887,12 +970,12 @@ function SearchBox({
   const suggestions = query ? entries.filter((e) => e.displayName.toLowerCase().includes(query)).slice(0, 5) : [];
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-64">
       <label
-        className="inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5"
-        style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+        className="flex min-h-11 items-center gap-2 rounded-[10px] border px-3 transition-colors focus-within:border-[var(--line-ember)]"
+        style={{ borderColor: "var(--line)", background: "var(--ground-2)" }}
       >
-        <Search size={15} style={{ color: "var(--ash-dim)" }} />
+        <Search size={16} aria-hidden style={{ color: "var(--text-3)" }} />
         <input
           ref={inputRef}
           value={q}
@@ -900,10 +983,17 @@ function SearchBox({
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 120)}
           placeholder={d.searchPlaceholder}
-          className="w-40 bg-transparent text-[14px] outline-none placeholder:text-[var(--ash-dim)]"
-          style={{ color: "var(--warm-white)" }}
+          className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[var(--text-3)] sm:text-[15px]"
+          style={{ color: "var(--text)" }}
           aria-label={d.searchPlaceholder}
         />
+        <kbd
+          aria-hidden
+          className="hidden rounded border px-1.5 text-[12px] lg:inline"
+          style={{ borderColor: "var(--line-strong)", color: "var(--text-3)" }}
+        >
+          /
+        </kbd>
       </label>
       <AnimatePresence>
         {focused && suggestions.length > 0 && (
@@ -912,8 +1002,8 @@ function SearchBox({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border"
-            style={{ borderColor: "var(--line-strong)", background: "var(--ground-2)" }}
+            className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-[10px] border"
+            style={{ borderColor: "var(--line-strong)", background: "var(--surface-2)", boxShadow: "var(--shadow-2)" }}
           >
             {suggestions.map((s) => (
               <li key={s.displayName}>
@@ -921,10 +1011,10 @@ function SearchBox({
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => router.push(guardianHref(s.displayName))}
-                  className="flex min-h-11 w-full items-center gap-2 px-3.5 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]"
-                  style={{ color: "var(--warm-white)" }}
+                  className="flex min-h-11 w-full items-center gap-2.5 px-3 text-left text-[14px] transition-colors hover:bg-[var(--surface-3)]"
+                  style={{ color: "var(--text)" }}
                 >
-                  <GuardianDot />
+                  <GuardianDot name={s.displayName} />
                   <span className="truncate">{s.displayName}</span>
                 </button>
               </li>
@@ -936,32 +1026,31 @@ function SearchBox({
   );
 }
 
-// A real, minimal shortcuts reference — "/" and "?" are the only two that exist, so this
-// lists exactly two rows rather than padding out a longer list of things the site doesn't do.
+// A real, minimal shortcuts reference — "/", "?" and Esc are the only ones that exist.
 function ShortcutsHelp({ open, onClose, d }: { open: boolean; onClose: () => void; d: Dict }) {
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
-          <div className="absolute inset-0" style={{ background: "rgba(8,5,14,0.72)" }} aria-hidden />
+          <div className="absolute inset-0" style={{ background: "rgba(5,4,3,0.72)" }} aria-hidden />
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={d.shortcuts.title}
-            className="card relative z-10 w-full max-w-xs p-5"
-            initial={{ opacity: 0, scale: 0.94, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="panel relative z-10 w-full max-w-xs p-5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.2, ease: EASE_OUT }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-serif-display text-[17px] font-semibold" style={{ color: "var(--warm-white)" }}>
+            <h2 className="text-[16px] font-semibold" style={{ color: "var(--text)" }}>
               {d.shortcuts.title}
             </h2>
             <div className="mt-4 flex flex-col gap-2.5">
@@ -969,12 +1058,7 @@ function ShortcutsHelp({ open, onClose, d }: { open: boolean; onClose: () => voi
               <ShortcutRow keyLabel="?" label={d.shortcuts.toggleHelp} />
               <ShortcutRow keyLabel="Esc" label={d.shortcuts.close} />
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-5 min-h-11 w-full rounded-lg border text-[13px] font-medium transition-colors hover:text-[var(--warm-white)]"
-              style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
-            >
+            <button type="button" onClick={onClose} className="btn btn-secondary mt-5 w-full">
               {d.shortcuts.close}
             </button>
           </motion.div>
@@ -987,12 +1071,12 @@ function ShortcutsHelp({ open, onClose, d }: { open: boolean; onClose: () => voi
 function ShortcutRow({ keyLabel, label }: { keyLabel: string; label: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+      <span className="text-[14px]" style={{ color: "var(--text-2)" }}>
         {label}
       </span>
       <kbd
-        className="font-mono-num rounded-md border px-2 py-1 text-[12px]"
-        style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)", background: "var(--surface-2)" }}
+        className="rounded-md border px-2 py-1 text-[12px]"
+        style={{ borderColor: "var(--line-strong)", color: "var(--text)", background: "var(--surface-2)" }}
       >
         {keyLabel}
       </kbd>
@@ -1020,52 +1104,47 @@ function OnboardingTour({
     <AnimatePresence>
       {open && current && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center p-5 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="absolute inset-0" style={{ background: "rgba(8,5,14,0.72)" }} aria-hidden />
+          <div className="absolute inset-0" style={{ background: "rgba(5,4,3,0.72)" }} aria-hidden />
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={current.title}
-            className="card relative z-10 w-full max-w-sm p-6 text-center"
-            initial={{ opacity: 0, y: 16 }}
+            className="panel relative z-10 w-full max-w-sm p-6"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.25, ease: EASE_OUT }}
           >
-            <div className="flex items-center justify-center gap-1.5">
-              {steps.map((_, i) => (
-                <span
-                  key={i}
-                  className="h-1.5 rounded-full transition-all"
-                  style={{ width: i === step ? 18 : 6, background: i === step ? "var(--ember)" : "var(--line)" }}
-                />
-              ))}
+            <div className="flex items-center justify-between">
+              <span className="font-mono-num text-[12px]" style={{ color: "var(--text-3)" }}>
+                {String((step as number) + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
+              </span>
+              <div className="flex items-center gap-1.5">
+                {steps.map((_, i) => (
+                  <span
+                    key={i}
+                    className="h-1 rounded-full transition-all"
+                    style={{ width: i === step ? 18 : 6, background: i === step ? "var(--ember)" : "var(--line-strong)" }}
+                  />
+                ))}
+              </div>
             </div>
-            <h2 className="font-serif-display mt-4 text-[19px] font-semibold" style={{ color: "var(--warm-white)" }}>
+            <h2 className="font-serif-display mt-4 text-[24px] font-medium" style={{ color: "var(--text)" }}>
               {current.title}
             </h2>
-            <p className="mt-2 text-[14px]" style={{ color: "var(--ash)" }}>
+            <p className="mt-2 text-[15px]" style={{ color: "var(--text-2)" }}>
               {current.body}
             </p>
             <div className="mt-6 flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={onDismiss}
-                className="min-h-11 flex-1 rounded-lg border text-[13px] font-medium transition-colors hover:text-[var(--warm-white)]"
-                style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
-              >
+              <button type="button" onClick={onDismiss} className="btn btn-secondary flex-1">
                 {d.onboarding.skip}
               </button>
-              <button
-                type="button"
-                onClick={isLast ? onDismiss : onNext}
-                className="min-h-11 flex-1 rounded-lg text-[13px] font-bold"
-                style={{ background: "linear-gradient(90deg, var(--ember), var(--spark))", color: "#1a0d04" }}
-              >
+              <button type="button" onClick={isLast ? onDismiss : onNext} className="btn btn-primary flex-1">
                 {isLast ? d.onboarding.done : d.onboarding.next}
               </button>
             </div>
@@ -1078,119 +1157,63 @@ function OnboardingTour({
 
 /* ------------------------------------------------------------------ Podium */
 
-function PodiumCard({
+function PodiumCell({
   guardian,
   rank,
-  reduce,
   d,
+  reduce,
   match,
+  dim,
   newRecord,
 }: {
   guardian: Guardian;
   rank: number;
-  reduce: boolean;
   d: Dict;
+  reduce: boolean;
   match: boolean;
+  dim: boolean;
   newRecord: boolean;
 }) {
   const isFirst = rank === 0;
-  // Every rank gets a shadow tinted to its medal color, not just #1 — subtle depth cue that
-  // reads as "this card sits at a different height" instead of one lit card and two flat ones.
-  const glow =
-    rank === 0
-      ? "0 26px 60px -32px rgba(255,122,45,0.75)"
-      : rank === 1
-      ? "0 18px 42px -28px rgba(200,205,220,0.4)"
-      : "0 18px 42px -28px rgba(205,145,95,0.35)";
-
-  const rotateX = useMotionValue(0);
-  const rotateY = useMotionValue(0);
-  const tiltX = useSpring(rotateX, { stiffness: 300, damping: 22 });
-  const tiltY = useSpring(rotateY, { stiffness: 300, damping: 22 });
-  function handleMove(e: MouseEvent<HTMLDivElement>) {
-    if (reduce) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    rotateY.set(((e.clientX - rect.left) / rect.width - 0.5) * 8);
-    rotateX.set(-((e.clientY - rect.top) / rect.height - 0.5) * 8);
-  }
-  function handleLeave() {
-    rotateX.set(0);
-    rotateY.set(0);
-  }
-
   return (
-    <motion.div
+    <motion.li
       variants={reduce ? undefined : podiumItem}
-      whileHover={reduce ? undefined : { y: -5 }}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      transition={{ type: "spring", stiffness: 400, damping: 26 }}
-      className="flex flex-col items-center rounded-2xl border px-2 pb-4"
+      className={`relative ${rank > 0 ? "border-t sm:border-l sm:border-t-0" : ""}`}
       style={{
-        borderColor: match ? "var(--line-violet)" : isFirst ? "var(--line-strong)" : "var(--line)",
-        background: isFirst
-          ? "linear-gradient(180deg, rgba(255,122,45,0.12), var(--surface))"
-          : "linear-gradient(180deg, var(--surface), var(--ground-2))",
-        paddingTop: isFirst ? 20 : 34,
-        marginBottom: isFirst ? 10 : 0,
-        boxShadow: glow,
-        rotateX: reduce ? 0 : tiltX,
-        rotateY: reduce ? 0 : tiltY,
-        transformPerspective: 700,
+        borderColor: "var(--line)",
+        background: match ? "var(--ember-tint)" : isFirst ? "linear-gradient(180deg, rgba(232,118,60,0.07), transparent 70%)" : "transparent",
+        opacity: dim ? 0.45 : 1,
       }}
     >
-      <Link
-        href={guardianHref(guardian.displayName)}
-        className="group flex w-full flex-col items-center"
-        style={{ color: "inherit", textDecoration: "none" }}
-      >
-      {isFirst && (
-        <motion.div
-          animate={reduce ? undefined : { y: [0, -3, 0] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          className="relative mb-1.5"
-        >
-          <Crown size={20} strokeWidth={1.6} style={{ color: "var(--gold)" }} />
-          <RecordBurst active={newRecord && !reduce} />
-        </motion.div>
-      )}
-      <div className="relative">
-        <GuardianDot big={isFirst} />
-        <span
-          className="font-mono-num absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[11px]"
-          style={{ background: "var(--ground)", color: MEDAL[rank], border: `1px solid ${MEDAL[rank]}` }}
-        >
-          {rank + 1}
-        </span>
-      </div>
-      <span
-        className="mt-3 max-w-full truncate px-1 text-center text-[13px] sm:text-[14px]"
-        style={{ color: "var(--warm-white)" }}
-        title={guardian.displayName}
-      >
-        {guardian.displayName}
-      </span>
-      <div className="mt-1.5">
-        <Brasas value={guardian.brasas} reduce={reduce} accent={isFirst} />
-      </div>
-      <div className="mt-2">
-        <Badge brasas={guardian.brasas} d={d} />
-      </div>
-      {typeof guardian.gamesPlayed === "number" && (
-        <span
-          className="max-h-0 overflow-hidden text-[11px] opacity-0 transition-all duration-300 group-hover:mt-1.5 group-hover:max-h-4 group-hover:opacity-100"
-          style={{ color: "var(--ash-dim)" }}
-        >
-          {guardian.gamesPlayed} {d.rounds}
-        </span>
-      )}
+      <span aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: MEDAL[rank], opacity: isFirst ? 1 : 0.6 }} />
+      <Link href={guardianHref(guardian.displayName)} className="group flex h-full flex-col gap-3 p-4 transition-colors sm:gap-4 sm:p-5 hover:bg-[var(--surface-2)]">
+        <div className="flex items-center justify-between">
+          <span className="font-mono-num text-[13px]" style={{ color: MEDAL[rank] }}>
+            {String(rank + 1).padStart(2, "0")}
+          </span>
+          {isFirst && (
+            <span className="relative inline-flex">
+              <Crown size={16} aria-hidden style={{ color: "var(--gold)" }} />
+              <RecordBurst active={newRecord && !reduce} />
+            </span>
+          )}
+        </div>
+        <div className="flex min-w-0 items-center gap-3">
+          <GuardianDot name={guardian.displayName} />
+          <span className="truncate text-[16px] font-medium" style={{ color: "var(--text)" }} title={guardian.displayName}>
+            {guardian.displayName}
+          </span>
+        </div>
+        <div className="flex items-end justify-between gap-2">
+          <Badge brasas={guardian.brasas} d={d} />
+          <Brasas value={guardian.brasas} reduce={reduce} accent={isFirst} large />
+        </div>
       </Link>
-    </motion.div>
+    </motion.li>
   );
 }
 
-// Shows briefly after a live poll reorders the list — "this row moved" instead of a row just
-// silently sliding to a new spot via layout animation with no explanation why.
+// Shows briefly after a live poll reorders the list — "this row moved" instead of a silent slide.
 function RankChangeArrow({ delta }: { delta?: number }) {
   if (!delta) return null;
   const up = delta > 0;
@@ -1200,95 +1223,189 @@ function RankChangeArrow({ delta }: { delta?: number }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       aria-hidden
-      style={{ color: up ? "var(--spark)" : "#ff8a7a" }}
+      style={{ color: up ? "var(--ok)" : "var(--danger)" }}
     >
-      {up ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+      {up ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
     </motion.span>
   );
 }
 
 /* ------------------------------------------------------------- How it works */
 
-// A connected, numbered sequence instead of a flat card grid — the 7 systems are steps in one
-// chain (fogata → seats → minigame → brasas → HUD → invites → anti-cheat), so the layout now
-// says that: a spine that fills in as you scroll past it, with each system as a lit node on it.
-function HowItWorks({ d, reduce }: { d: Dict; reduce: boolean }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: trackRef, offset: ["start 0.85", "end 0.6"] });
-  const fill = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+const SYSTEM_ICONS = [Flame, Armchair, Timer, Coins, Trophy, UserPlus, ServerCog];
 
+// The 7 systems of the scene as one ruled grid (hairline cells), closed by an eighth cell that
+// sends you to the demo — 4×2 on desktop, 2 columns on tablet, a single column on phones.
+function HowItWorks({ d, L, reduce }: { d: Dict; L: Local; reduce: boolean }) {
   return (
-    <section className="relative z-10 mt-20">
-      <div className="mb-8 text-center">
-        <div className="eyebrow">{d.howEyebrow}</div>
-        <h2 className="font-serif-display mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {d.howTitle}
-        </h2>
+    <section id="how" className="mt-24 scroll-mt-24 sm:mt-32" aria-labelledby="how-title">
+      <div className="grid gap-4 lg:grid-cols-12 lg:items-end">
+        <div className="lg:col-span-6">
+          <div className="eyebrow">{d.howEyebrow}</div>
+          <h2 id="how-title" className="font-serif-display mt-2 text-[32px] font-medium leading-tight sm:text-[40px]">
+            {d.howTitle}
+          </h2>
+        </div>
+        <p className="max-w-md text-[16px] lg:col-span-6 lg:justify-self-end" style={{ color: "var(--text-2)" }}>
+          {L.howLead}
+        </p>
       </div>
-      <div ref={trackRef} className="relative">
-        <div
-          aria-hidden
-          className="absolute left-[19px] top-2 bottom-2 w-px sm:left-5"
-          style={{ background: "var(--line)" }}
-        />
-        {!reduce && (
-          <motion.div
-            aria-hidden
-            className="absolute left-[19px] top-2 w-px sm:left-5"
-            style={{
-              height: fill,
-              background: "linear-gradient(180deg, var(--ember), var(--violet))",
-              boxShadow: "0 0 12px rgba(255,150,60,0.5)",
-            }}
-          />
-        )}
-        <div className="flex flex-col gap-4">
-          {d.systems.map((s, i) => (
-            <motion.div
+
+      <ol
+        className="mt-8 grid gap-px overflow-hidden rounded-[14px] border sm:grid-cols-2 lg:grid-cols-4"
+        style={{ borderColor: "var(--line)", background: "var(--line)" }}
+      >
+        {d.systems.map((s, i) => {
+          const Icon = SYSTEM_ICONS[i] ?? Flame;
+          return (
+            <motion.li
               key={s.name}
-              className="relative flex items-start gap-4"
-              initial={reduce ? undefined : { opacity: 0, x: -12 }}
-              whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, ease: EASE_OUT, delay: Math.min(i * 0.04, 0.24) }}
+              className="flex flex-col p-6"
+              style={{ background: "var(--surface)" }}
+              initial={reduce ? undefined : { opacity: 0 }}
+              whileInView={reduce ? undefined : { opacity: 1 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.4, ease: EASE_OUT, delay: Math.min(i * 0.04, 0.2) }}
             >
-              <span
-                className="font-mono-num relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[13px]"
-                style={{ background: "var(--ground)", borderColor: "var(--line-strong)", color: "var(--ember)" }}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="card flex-1 p-4">
-                <h3 className="text-[15px] font-semibold" style={{ color: "var(--warm-white)" }}>
-                  {s.name}
-                </h3>
-                <p className="mt-1 text-[13.5px]" style={{ color: "var(--ash)" }}>
-                  {s.blurb}
-                </p>
+              <div className="flex items-center justify-between">
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border"
+                  style={{ borderColor: "var(--line-strong)", background: "var(--surface-2)" }}
+                >
+                  <Icon size={17} strokeWidth={1.75} aria-hidden style={{ color: "var(--ember)" }} />
+                </span>
+                <span className="font-mono-num text-[12px]" style={{ color: "var(--text-3)" }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
               </div>
-            </motion.div>
-          ))}
+              <h3 className="mt-5 text-[16px] font-semibold" style={{ color: "var(--text)" }}>
+                {s.name}
+              </h3>
+              <p className="mt-1.5 text-[15px] leading-relaxed" style={{ color: "var(--text-2)" }}>
+                {s.blurb}
+              </p>
+            </motion.li>
+          );
+        })}
+        <li className="flex flex-col justify-between gap-6 p-6" style={{ background: "var(--surface-2)" }}>
+          <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-2)" }}>
+            {L.tryCell}
+          </p>
+          <Link href="/demo" className="btn btn-primary self-start">
+            <Play size={14} fill="currentColor" aria-hidden />
+            {d.cta.demo}
+          </Link>
+        </li>
+      </ol>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ Footer */
+
+function SiteFooter({
+  d,
+  L,
+  source,
+  guardians,
+  totalBrasas,
+  reduce,
+}: {
+  d: Dict;
+  L: Local;
+  source: LeaderboardBundle["source"];
+  guardians: number;
+  totalBrasas: number;
+  reduce: boolean;
+}) {
+  return (
+    <footer className="mt-24 border-t pt-12 sm:mt-32" style={{ borderColor: "var(--line)" }}>
+      <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <div className="flex items-center gap-2.5">
+            <RefugioMark />
+            <span className="font-serif-display text-[18px] font-semibold">Refugio</span>
+          </div>
+          <p className="mt-4 max-w-sm text-[15px]" style={{ color: "var(--text-2)" }}>
+            {L.footerAbout}
+          </p>
+          <p className="mt-3 max-w-sm text-[13px]" style={{ color: "var(--text-3)" }}>
+            {source === "live" ? d.footerLive : d.footerPreview}
+          </p>
+        </div>
+
+        <div className="lg:col-span-3">
+          <div className="eyebrow">{L.community}</div>
+          <Link href="/stats" className="mt-4 flex flex-col gap-3">
+            <FooterStat label={d.footerStats.guardians} value={guardians} reduce={reduce} />
+            <FooterStat label={d.footerStats.totalBrasas} value={totalBrasas} reduce={reduce} />
+          </Link>
+        </div>
+
+        <div className="lg:col-span-4">
+          <div className="eyebrow">{L.project}</div>
+          <ul className="mt-2 flex flex-col">
+            <li>
+              <Link href="/demo" className="link inline-flex min-h-11 items-center gap-1.5 text-[15px]">
+                {d.cta.demo}
+              </Link>
+            </li>
+            <li>
+              <a href="https://github.com/ALFA117/Refugio" target="_blank" rel="noreferrer" className="link inline-flex min-h-11 items-center gap-1.5 text-[15px]">
+                {d.cta.github}
+                <ArrowUpRight size={14} aria-hidden style={{ color: "var(--text-3)" }} />
+              </a>
+            </li>
+            <li>
+              <WallShareButton d={d} />
+            </li>
+            <li>
+              {/* Honest disabled state: the DCL scene is not published yet. */}
+              <span className="inline-flex min-h-11 items-center gap-2 text-[15px]" style={{ color: "var(--text-3)" }}>
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--warn)" }} />
+                {d.cta.sceneSoon}
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
-    </section>
+      <div
+        className="mt-12 flex flex-col gap-2 border-t py-6 text-[13px] sm:flex-row sm:items-center sm:justify-between"
+        style={{ borderColor: "var(--line)", color: "var(--text-3)" }}
+      >
+        <span>© Refugio · Wall of Guardians</span>
+        <span>{L.built}</span>
+      </div>
+    </footer>
   );
 }
 
 /* --------------------------------------------------------------- Primitives */
 
-export function GuardianDot({ big = false }: { big?: boolean }) {
-  const s = big ? 40 : 22;
+// Guardian avatar: a neutral monogram tile (first letter of the handle). With no name it falls
+// back to a small ember dot — used where only a bullet is needed.
+export function GuardianDot({ big = false, name }: { big?: boolean; name?: string }) {
+  const s = big ? 48 : 28;
+  if (!name) {
+    return <span aria-hidden className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: "var(--ember)" }} />;
+  }
+  const initial = name.replace(/[^A-Za-z0-9À-ɏ]/g, "").charAt(0).toUpperCase() || "·";
   return (
     <span
       aria-hidden
-      className="inline-block shrink-0 rounded-full"
+      className="font-mono-num inline-flex shrink-0 items-center justify-center rounded-lg border"
       style={{
         width: s,
         height: s,
-        background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
-        boxShadow: "0 0 14px rgba(255,150,60,0.5)",
+        fontSize: big ? 18 : 13,
+        fontWeight: 500,
+        borderColor: "var(--line-strong)",
+        background: "var(--surface-2)",
+        color: "var(--text-2)",
       }}
-    />
+    >
+      {initial}
+    </span>
   );
 }
 
@@ -1297,75 +1414,42 @@ export function Badge({ brasas, d }: { brasas: number; d: Dict }) {
   if (!b) return null;
   return (
     <span
-      className="font-mono-num shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider"
-      style={{ color: b.color, border: `1px solid ${b.color}`, opacity: 0.85 }}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12px] font-medium"
+      style={{ borderColor: "var(--line)", color: "var(--text-2)", background: "var(--ground-2)" }}
     >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: b.color }} />
       {b.label}
     </span>
   );
 }
 
-export function Brasas({ value, reduce, accent = false }: { value: number; reduce: boolean; accent?: boolean }) {
+export function Brasas({
+  value,
+  reduce,
+  accent = false,
+  large = false,
+}: {
+  value: number;
+  reduce: boolean;
+  accent?: boolean;
+  large?: boolean;
+}) {
   return (
-    <span className="flex items-center gap-1.5" style={{ color: accent ? "var(--spark)" : "var(--amber)" }}>
-      <Flame size={accent ? 16 : 14} strokeWidth={1.8} />
-      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[14px] font-medium" />
+    <span className="inline-flex items-center gap-1.5" style={{ color: accent ? "var(--ember)" : "var(--text)" }}>
+      <Flame size={large ? 16 : 14} strokeWidth={1.8} aria-hidden style={{ color: "var(--ember)" }} />
+      <TickerNumber value={value} reduce={reduce} className={`font-mono-num font-medium ${large ? "text-[18px]" : "text-[15px]"}`} />
     </span>
   );
 }
 
 function FooterStat({ label, value, reduce }: { label: string; value: number; reduce: boolean }) {
   return (
-    <div className="flex items-baseline gap-2">
-      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[18px] font-semibold" />
-      <span className="text-[12px]" style={{ color: "var(--ash-dim)" }}>
+    <div className="flex items-baseline gap-2.5">
+      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[22px] font-medium" />
+      <span className="text-[14px]" style={{ color: "var(--text-3)" }}>
         {label}
       </span>
     </div>
-  );
-}
-
-function FooterLink({
-  href,
-  label,
-  external = false,
-  disabled = false,
-}: {
-  href?: string;
-  label: string;
-  external?: boolean;
-  disabled?: boolean;
-}) {
-  // A disabled entry is a real, honest state (e.g. the DCL scene isn't published yet) rather
-  // than a live-looking link pointing at "#" that does nothing when clicked — an <a> without
-  // an href is also naturally out of the tab order, so it doesn't masquerade as interactive.
-  if (disabled) {
-    return (
-      <span
-        className="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-lg border border-dashed px-4 font-mono-num text-[13px]"
-        style={{ borderColor: "var(--line-violet)", color: "var(--ash-dim)" }}
-      >
-        {label}
-      </span>
-    );
-  }
-  return (
-    <motion.a
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      whileTap={TAP_PRESS}
-      transition={SNAPPY}
-      className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
-      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
-    >
-      {label}
-      <ArrowUpRight
-        size={14}
-        className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-        style={{ color: "var(--amber)" }}
-      />
-    </motion.a>
   );
 }
 
@@ -1396,182 +1480,21 @@ function WallShareButton({ d }: { d: Dict }) {
       onClick={share}
       whileTap={TAP_PRESS}
       transition={SNAPPY}
-      className="group inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 font-mono-num text-[13px] transition-colors hover:border-[var(--amber)]"
-      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+      className="link inline-flex min-h-11 items-center gap-1.5 text-[15px]"
     >
       {copied ? d.cta.copied : d.cta.share}
       {copied ? (
-        <Check size={14} style={{ color: "var(--gold)" }} />
+        <Check size={14} aria-hidden style={{ color: "var(--ok)" }} />
       ) : (
-        <Share2 size={14} className="transition-transform group-hover:scale-110" style={{ color: "var(--amber)" }} />
+        <Share2 size={14} aria-hidden style={{ color: "var(--text-3)" }} />
       )}
     </motion.button>
   );
 }
 
-/* ---------------------------------------------------- Ambient ember canvas */
-
-// A tiny living flame inside the CTA — cheap (one icon, no canvas) stand-in for "there's a
-// real fire in there," reinforcing the button is a portal into the actual mechanic.
-function FlickerFlame() {
-  return (
-    <motion.span
-      className="inline-flex"
-      animate={{ scale: [1, 1.12, 0.96, 1.05, 1], rotate: [0, -3, 2, -1, 0] }}
-      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <Flame size={18} fill="#1a0d04" style={{ color: "#1a0d04" }} />
-    </motion.span>
-  );
-}
-
-// Localized glow behind the hero card — slow-drifting warm radial blobs, distinct from the
-// page-wide AmbientEmbers (which is faint/decorative everywhere). This one is meant to be
-// felt: it's what gives the hero card weight instead of it reading as flat text on black.
-function HeroGlow({ reduce }: { reduce: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const parent = canvas?.parentElement;
-    if (!canvas || !parent) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-
-    const blobs = [
-      { baseX: 0.22, baseY: 0.15, r: 0.55, hue: "rgba(255,150,60,", speed: 0.00018, phase: 0, ampX: 0.08, ampY: 0.05 },
-      { baseX: 0.82, baseY: 0.1, r: 0.42, hue: "rgba(139,124,255,", speed: 0.00022, phase: 2.1, ampX: 0.06, ampY: 0.06 },
-      { baseX: 0.55, baseY: 0.9, r: 0.5, hue: "rgba(255,196,102,", speed: 0.00015, phase: 4.3, ampX: 0.07, ampY: 0.04 },
-    ];
-
-    const size = () => {
-      canvas.width = parent.clientWidth * DPR;
-      canvas.height = parent.clientHeight * DPR;
-    };
-    size();
-    const ro = new ResizeObserver(size);
-    ro.observe(parent);
-
-    if (reduce) {
-      // Reduced motion: paint one static frame instead of animating.
-      const w = canvas.width, h = canvas.height;
-      for (const b of blobs) {
-        const cx = b.baseX * w, cy = b.baseY * h, r = b.r * Math.max(w, h);
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, b.hue + "0.16)");
-        g.addColorStop(1, b.hue + "0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
-      }
-      return () => ro.disconnect();
-    }
-
-    let raf = 0;
-    const frame = (t: number) => {
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-      ctx.globalCompositeOperation = "lighter";
-      for (const b of blobs) {
-        const cx = (b.baseX + Math.sin(t * b.speed + b.phase) * b.ampX) * w;
-        const cy = (b.baseY + Math.cos(t * b.speed * 0.8 + b.phase) * b.ampY) * h;
-        const r = b.r * Math.max(w, h);
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, b.hue + "0.14)");
-        g.addColorStop(1, b.hue + "0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
-      }
-      ctx.globalCompositeOperation = "source-over";
-      if (document.hidden) {
-        raf = 0;
-        return;
-      }
-      raf = requestAnimationFrame(frame);
-    };
-    const resume = () => {
-      if (!document.hidden && !raf) raf = requestAnimationFrame(frame);
-    };
-    document.addEventListener("visibilitychange", resume);
-    raf = requestAnimationFrame(frame);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      document.removeEventListener("visibilitychange", resume);
-    };
-  }, [reduce]);
-
-  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />;
-}
-
-export function AmbientEmbers({ reduce }: { reduce: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 800], [0, 140]);
-
-  useEffect(() => {
-    if (reduce) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let raf = 0;
-    const parts: { x: number; y: number; vy: number; life: number; size: number; hue: number; ph: number }[] = [];
-
-    const size = () => {
-      canvas.width = window.innerWidth * DPR;
-      canvas.height = window.innerHeight * DPR;
-    };
-    size();
-    window.addEventListener("resize", size);
-
-    const frame = () => {
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-      if (Math.random() < 0.5)
-        parts.push({ x: Math.random() * w, y: h + 10, vy: -(0.25 + Math.random() * 0.7), life: 1, size: 0.6 + Math.random() * 1.7, hue: 20 + Math.random() * 26, ph: Math.random() * 6.28 });
-      for (let i = parts.length - 1; i >= 0; i--) {
-        const p = parts[i];
-        p.y += p.vy * DPR;
-        p.x += Math.sin(p.y * 0.01 + p.ph) * 0.5;
-        p.life -= 0.0035;
-        if (p.life <= 0 || p.y < -20) { parts.splice(i, 1); continue; }
-        ctx.globalAlpha = Math.max(0, p.life * 0.5);
-        ctx.fillStyle = `hsl(${p.hue},100%,62%)`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * DPR, 0, 6.28);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      if (parts.length > 180) parts.splice(0, parts.length - 180);
-      // Stop scheduling while the tab is hidden — a background tab burning CPU/battery on a
-      // purely decorative animation nobody can see is wasted work, browser throttling aside.
-      if (document.hidden) {
-        raf = 0;
-        return;
-      }
-      raf = requestAnimationFrame(frame);
-    };
-    const resume = () => {
-      if (!document.hidden && !raf) frame();
-    };
-    document.addEventListener("visibilitychange", resume);
-    frame();
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", size);
-      document.removeEventListener("visibilitychange", resume);
-    };
-  }, [reduce]);
-
-  return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10"
-      style={{ y: reduce ? 0 : y }}
-    >
-      <canvas ref={canvasRef} className="h-full w-full opacity-70" />
-    </motion.div>
-  );
+// Former page-wide ember canvas. The redesign drops the animated backdrop for a quieter, static
+// light (see body background in globals.css); kept as a no-op so other pages' imports still work.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function AmbientEmbers(props: { reduce: boolean }) {
+  return null;
 }
