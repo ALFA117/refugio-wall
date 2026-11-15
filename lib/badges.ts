@@ -8,7 +8,7 @@ export const BADGE_TIERS = [
   { min: 2500, key: "eternal", color: "var(--warm-white)" },
   { min: 1000, key: "firekeeper", color: "var(--gold)" },
   { min: 500, key: "ember", color: "var(--ember)" },
-  { min: 100, key: "kindling", color: "var(--violet)" },
+  { min: 100, key: "kindling", color: "var(--amber)" },
   { min: 25, key: "spark", color: "var(--ash)" },
 ] as const;
 

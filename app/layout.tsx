@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -14,6 +15,11 @@ const fraunces = Fraunces({
   variable: "--font-display",
   display: "swap",
 });
+
+// Geist (bundled in app/fonts) — a sober, highly legible sans for UI and body copy, and its
+// mono sibling for ranks, embers and every other number (tabular figures).
+const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-sans", weight: "100 900", display: "swap" });
+const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-mono", weight: "100 900", display: "swap" });
 
 // Canonical host — this project also answers on refugio-azure.vercel.app and a few other
 // claimed aliases (all via `vercel domains add`, so they follow every deploy); this one is
@@ -54,8 +60,9 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={fraunces.variable}>
+    <html lang="en" className={`${fraunces.variable} ${geistSans.variable} ${geistMono.variable}`}>
       <body>
+        <a href="#main" className="skip-link">Skip to content</a>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         {children}
         <Analytics />

@@ -2,76 +2,212 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Refugio — Wall of Guardians. "Twilight Ember": a fire against a deep violet night sky.
-   Single committed dark world; every color explicit so it holds on any host ground. */
+/* Refugio — Wall of Guardians. "Hearth": a quiet, warm-charcoal night with one accent — the
+   ember. Neutrals carry the structure; the ember color is reserved for the primary action,
+   the leader and the embers count, so it always means "fire". Single committed dark theme
+   (a campfire reads at night); every color is a token, no loose hex in components.
+
+   Legacy token names (--violet, --amber, --spark, --warm-white, --ash…) are kept as aliases
+   so older call sites inherit the new palette instead of drifting. */
 :root {
-  --ground: #0e0a16;
-  --ground-2: #140e20;
-  --surface: #191128;
-  --surface-2: #221733;
-  --line: rgba(180, 150, 255, 0.28);
-  --line-strong: rgba(255, 150, 90, 0.30);
-  --line-violet: rgba(162, 129, 255, 0.28);
+  /* Ground & surfaces (warm charcoal, ~1.5% steps) */
+  --ground: #0d0c0b;
+  --ground-2: #121110;
+  --surface: #171514;
+  --surface-2: #1f1c1a;
+  --surface-3: #282422;
 
-  --ember: #ff7a2d;
-  --amber: #ffb347;
-  --spark: #ffd66b;
-  --violet: #a281ff;
-  --rose: #ff6b9d;
+  /* Hairlines */
+  --line: rgba(242, 233, 222, 0.09);
+  --line-strong: rgba(242, 233, 222, 0.16);
+  --line-violet: rgba(242, 233, 222, 0.16); /* legacy alias: "emphasized hairline" */
+  --line-ember: rgba(232, 118, 60, 0.45);
 
-  --warm-white: #f5eee6;
-  --ash: #b6aecb;      /* violet-tinted chosen neutral */
-  --ash-dim: #8a7fa8;
+  /* Text */
+  --text: #f2ede6;
+  --text-2: #b0a79b; /* 8:1 on ground */
+  --text-3: #8e857a; /* 5.2:1 on ground, 4.8:1 on surface */
 
-  --gold: #ffd66b;
-  --silver: #cdd3e6;
-  --bronze: #d98a5a;
+  /* Accent — ember, the only chromatic color in the UI */
+  --ember: #e8763c;
+  --ember-hover: #f08a52;
+  --ember-ink: #160b04; /* text on ember fill, 6.6:1 */
+  --ember-tint: rgba(232, 118, 60, 0.1);
 
-  /* Self-hosted via next/font/google in app/layout.tsx (--font-display); system serif is the
-     fallback while it loads and for any context outside the Next.js font pipeline. */
+  /* Semantic (used only for state, never decoration) */
+  --ok: #6fbf8a;
+  --warn: #e3b25a;
+  --danger: #e06a5a;
+
+  /* Medals — desaturated metals, not neon */
+  --gold: #d9b46a;
+  --silver: #c4c7cc;
+  --bronze: #c08a62;
+
+  /* Legacy aliases */
+  --amber: #efb07c;
+  --spark: #f3c08f;
+  --violet: var(--text-2);
+  --rose: var(--danger);
+  --warm-white: var(--text);
+  --ash: var(--text-2);
+  --ash-dim: var(--text-3);
+
+  /* Radii, shadows (hard, short, discreet) */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+
+  /* Type */
   --serif: var(--font-display), "Iowan Old Style", Georgia, "Times New Roman", serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --sans: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: var(--font-mono), ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+  background: var(--ground);
+}
 
 body {
+  isolation: isolate;
+  /* One quiet, static light source: the fire is "below" the page. No animated backdrop. */
   background:
-    radial-gradient(70% 45% at 50% -8%, rgba(162, 129, 255, 0.12), transparent 60%),
-    radial-gradient(90% 55% at 50% 116%, rgba(255, 122, 45, 0.16), transparent 62%),
+    radial-gradient(60% 40% at 50% 112%, rgba(232, 118, 60, 0.07), transparent 70%),
     var(--ground);
   background-attachment: fixed;
-  color: var(--warm-white);
+  color: var(--text);
   font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
-.font-serif-display { font-family: var(--serif); }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+.font-serif-display {
+  font-family: var(--serif);
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
 .font-mono-num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
+/* Small label above headings. Sentence-sized, not shouting: mono, modest tracking. */
 .eyebrow {
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.22em;
+  line-height: 16px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--violet);
+  color: var(--text-3);
 }
 
-.card {
+@layer components {
+/* Base surfaces */
+.card,
+.panel {
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--surface), var(--ground-2));
-  border-radius: 14px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
 }
 
-::selection { background: rgba(162, 129, 255, 0.32); color: var(--warm-white); }
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.btn-primary {
+  background: var(--ember);
+  color: var(--ember-ink);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+.btn-primary:hover { background: var(--ember-hover); }
+.btn-secondary {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+.btn-secondary:hover { border-color: rgba(242, 233, 222, 0.3); background: var(--surface-2); }
+.btn-ghost { color: var(--text-2); }
+.btn-ghost:hover { color: var(--text); background: var(--surface); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 6px; }
+/* Segmented control */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ground-2);
+}
 
-/* Route-transition skeletons (app/loading.tsx, app/guardians/[name]/loading.tsx) — a real
-   loading moment while the dynamic page's data fetch resolves, unlike the game's own state
-   which never blocks on network. */
+/* Small status pill: dot + text */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Inline link with ember underline on hover */
+.link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+.link:hover { text-decoration-color: var(--ember); }
+
+}
+
+kbd {
+  font-family: var(--mono);
+}
+
+::selection { background: rgba(232, 118, 60, 0.3); color: var(--text); }
+
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; border-radius: 6px; }
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--ember);
+  color: var(--ember-ink);
+  font-weight: 600;
+}
+.skip-link:focus { top: 12px; }
+
+/* Route-transition skeletons (app/loading.tsx, app/guardians/[name]/loading.tsx). */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -82,7 +218,7 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 214, 107, 0.09), transparent);
+  background: linear-gradient(90deg, transparent, rgba(242, 233, 222, 0.05), transparent);
   animation: skeleton-shimmer 1.6s infinite;
 }
 @keyframes skeleton-shimmer { 100% { transform: translateX(100%); } }
