@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Flame, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
+import { Flame, Play, Trophy, RotateCcw, Share2, Check } from "lucide-react";
 import { DICTS, type Dict } from "@/lib/i18n";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { AmbientEmbers } from "./Wall";
-import { LangToggle } from "./LangToggle";
+import { SiteHeader } from "./SiteHeader";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 const FEED_GAIN = 12;
@@ -190,20 +189,10 @@ export function Demo() {
   const lowHealth = phase === "playing" && health > 0 && health < 25;
 
   return (
-    <main className="relative mx-auto min-h-dvh w-full max-w-lg px-5 pb-16 pt-8">
+    <>
+    <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
+    <main id="main" className="relative mx-auto w-full max-w-xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
       <AmbientEmbers reduce={!!reduce} />
-
-      <div className="relative z-10 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
-          style={{ color: "var(--ash)" }}
-        >
-          <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
-          {d.backToWall}
-        </Link>
-        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
-      </div>
 
       {/* mode="sync" (the default) — deliberately NOT "wait": gating the new phase's mount on
           the old one's exit animation finishing means a tab that loses focus/visibility right
@@ -234,13 +223,13 @@ export function Demo() {
             {/* HUD chips */}
             <div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-2">
               <Chip icon={<Flame size={13} />} label={d.intensityLabel} value={`${intensity.toFixed(2)}×`} color="var(--amber)" />
-              <Chip icon={<Trophy size={13} />} label={d.streak} value={`${streak}`} color="var(--violet)" />
+              <Chip icon={<Trophy size={13} />} label={d.streak} value={`${streak}`} color="var(--text)" />
               <Chip icon={<Trophy size={13} />} label={d.best} value={`${best}`} color="var(--spark)" />
             </div>
 
             {/* The fire card — border pulses red when health is critically low */}
             <motion.div
-              className="relative z-10 mt-4 overflow-hidden rounded-2xl border"
+              className="relative z-10 mt-4 overflow-hidden rounded-[14px] border"
               animate={
                 lowHealth && !reduce
                   ? { borderColor: ["#ff5a4a", "var(--line-strong)", "#ff5a4a"] }
@@ -248,10 +237,10 @@ export function Demo() {
               }
               transition={lowHealth ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
               style={{
-                background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #060410 70%)",
+                background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #070605 70%)",
                 boxShadow: lowHealth
-                  ? "0 0 60px -10px rgba(255,80,60,0.45)"
-                  : "0 30px 90px -40px rgba(255,122,45,0.4)",
+                  ? "0 0 0 1px rgba(224,106,90,0.5)"
+                  : "var(--shadow-2)",
               }}
             >
               <div className="relative">
@@ -330,7 +319,7 @@ export function Demo() {
                         className="font-mono-num rounded-full px-3.5 py-1.5 text-[12px] font-medium"
                         style={{
                           color: toast.good ? "var(--spark)" : "#ffb0a2",
-                          background: "rgba(10,7,16,0.78)",
+                          background: "rgba(13,12,11,0.85)",
                           border: `1px solid ${toast.good ? "var(--line-strong)" : "rgba(255,100,80,0.45)"}`,
                         }}
                       >
@@ -348,7 +337,7 @@ export function Demo() {
 
               <div className="relative z-10 border-t px-5 py-4" style={{ borderColor: "var(--line)" }}>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono-num text-[11px] uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+                  <span className="eyebrow">
                     {d.fireHealth}
                   </span>
                   <span className="font-mono-num text-[13px]" style={{ color: healthColor }}>
@@ -380,7 +369,7 @@ export function Demo() {
                       boxShadow: "0 0 8px rgba(255,140,40,0.55)",
                     }}
                   />
-                  <span className="font-mono-num text-[12.5px]" style={{ color: "var(--ash)" }}>
+                  <span className="font-mono-num text-[13px]" style={{ color: "var(--ash)" }}>
                     {guardians}/{SEAT_COUNT} {d.guardiansLabel}
                   </span>
                 </div>
@@ -391,8 +380,7 @@ export function Demo() {
                     whileTap={reduce ? undefined : { scale: 0.96 }}
                     disabled={guardians >= SEAT_COUNT}
                     onClick={() => setGuardians((g) => Math.min(SEAT_COUNT, g + 1))}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-                    style={{ background: "linear-gradient(90deg, var(--ember), var(--amber))", color: "#1a0d04" }}
+                    className="btn btn-primary flex-1 whitespace-normal text-center"
                   >
                     <Flame size={15} />
                     {guardians >= SEAT_COUNT ? d.seatsFull : d.addGuardian}
@@ -402,8 +390,7 @@ export function Demo() {
                     onClick={() => setPhase("start")}
                     whileTap={reduce ? undefined : TAP_PRESS}
                     transition={SNAPPY}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-[13px] transition-colors hover:text-[var(--warm-white)]"
-                    style={{ borderColor: "var(--line-strong)", color: "var(--ash)" }}
+                    className="btn btn-secondary flex-1 whitespace-normal text-center"
                   >
                     <RotateCcw size={14} />
                     {d.emptyCircle}
@@ -418,10 +405,11 @@ export function Demo() {
         )}
       </AnimatePresence>
 
-      <p className="relative z-10 mx-auto mt-6 max-w-sm text-center text-[12.5px]" style={{ color: "var(--ash-dim)" }}>
+      <p className="relative z-10 mx-auto mt-6 max-w-sm text-center text-[13px]" style={{ color: "var(--ash-dim)" }}>
         {d.tryLive}
       </p>
     </main>
+    </>
   );
 }
 
@@ -478,30 +466,29 @@ function StartScreen({
       key="start"
       exit={reduce ? undefined : { opacity: 0, y: -16 }}
       transition={{ duration: 0.3 }}
-      className="relative z-10 mt-6 flex flex-col items-center text-center"
+      className="relative z-10 mt-2 flex flex-col items-center text-center"
     >
       <motion.div {...anim(0)} className="eyebrow">
         {d.eyebrow}
       </motion.div>
       <motion.h1
         {...anim(0.06)}
-        className="font-serif-display mx-auto mt-3 max-w-[16ch] text-3xl font-semibold leading-[1.08] tracking-tight sm:text-4xl"
+        className="font-serif-display mx-auto mt-3 max-w-[18ch] text-[36px] font-medium leading-[1.05] sm:text-[48px]"
       >
-        {d.title} <span style={{ color: "var(--ember)", fontStyle: "italic" }}>{d.titleEm}</span>
+        {d.title} <span style={{ color: "var(--ember)" }}>{d.titleEm}</span>
       </motion.h1>
-      <motion.p {...anim(0.12)} className="mx-auto mt-3 max-w-sm text-[14.5px]" style={{ color: "var(--ash)" }}>
+      <motion.p {...anim(0.12)} className="mx-auto mt-4 max-w-md text-[16px]" style={{ color: "var(--text-2)" }}>
         {d.subtitle}
       </motion.p>
 
       {/* Difficulty + Play sit right here, high up — no scrolling past the preview required
           to get to the one thing that matters: starting. */}
-      <motion.div {...anim(0.16)} className="mt-6 w-full">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-widest" style={{ color: "var(--violet)" }}>
+      <motion.div {...anim(0.16)} className="mt-8 w-full text-left">
+        <div className="eyebrow mb-2">
           {d.difficulty}
         </div>
         <div
-          className="inline-flex w-full rounded-full border p-1"
-          style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+          className="segmented w-full"
           role="tablist"
         >
           {modes.map((m) => {
@@ -512,14 +499,14 @@ function StartScreen({
                 role="tab"
                 aria-selected={active}
                 onClick={() => setDifficulty(m.key)}
-                className="relative flex min-h-11 flex-1 items-center justify-center rounded-full text-[13px] font-medium transition-colors"
-                style={{ color: active ? "#1a0d04" : "var(--ash)" }}
+                className="relative flex min-h-11 flex-1 items-center justify-center rounded-[7px] text-[15px] font-medium transition-colors"
+                style={{ color: active ? "var(--text)" : "var(--text-3)" }}
               >
                 {active && (
                   <motion.span
                     layoutId={reduce ? undefined : "mode-pill"}
-                    className="absolute inset-0 rounded-full"
-                    style={{ background: "linear-gradient(90deg, var(--ember), var(--amber))" }}
+                    className="absolute inset-0 rounded-[7px]"
+                    style={{ background: "var(--surface-3)", boxShadow: "inset 0 0 0 1px var(--line-strong)" }}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -534,40 +521,30 @@ function StartScreen({
         {...anim(0.22)}
         type="button"
         onClick={onPlay}
-        whileHover={reduce ? undefined : { scale: 1.03 }}
-        whileTap={reduce ? undefined : { scale: 0.96 }}
-        animate={
-          reduce
-            ? undefined
-            : { boxShadow: ["0 16px 40px -14px rgba(255,150,60,0.8)", "0 16px 56px -8px rgba(255,180,80,1)", "0 16px 40px -14px rgba(255,150,60,0.8)"] }
-        }
-        transition={{ boxShadow: { duration: 1.8, repeat: Infinity, ease: "easeInOut" } }}
-        className="mt-4 inline-flex min-h-16 w-full items-center justify-center gap-2 rounded-full text-[18px] font-bold"
-        style={{
-          background: "linear-gradient(90deg, var(--ember), var(--spark))",
-          color: "#1a0d04",
-        }}
+        whileTap={reduce ? undefined : { scale: 0.98 }}
+        className="btn btn-primary mt-4 w-full"
+        style={{ minHeight: 56, fontSize: 17 }}
       >
-        <Play size={20} fill="#1a0d04" />
+        <Play size={18} fill="currentColor" aria-hidden />
         {d.play}
       </motion.button>
 
       {/* A peek at the fire before you commit — supporting visual, no longer gatekeeping Play */}
       <motion.div
         {...anim(0.3)}
-        className="relative mt-7 w-full overflow-hidden rounded-2xl border"
+        className="relative mt-8 w-full overflow-hidden rounded-[14px] border"
         style={{
           borderColor: "var(--line-strong)",
-          background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #060410 70%)",
-          boxShadow: "0 30px 90px -40px rgba(255,122,45,0.4)",
+          background: "radial-gradient(120% 90% at 50% 100%, #1a0f10, #070605 70%)",
+          boxShadow: "var(--shadow-2)",
         }}
       >
         <ErrorBoundary fallback={<CanvasFallback />}>
           <FireCanvas guardians={previewGuardians} health={70} reduce={reduce} idle />
           <GuardianRing guardians={previewGuardians} reduce={reduce} />
         </ErrorBoundary>
-        <div className="pointer-events-none absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: "rgba(10,7,16,0.7)" }}>
-          <span className="font-mono-num text-[11px]" style={{ color: "var(--ash)" }}>
+        <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-[var(--line)] px-2.5 py-1" style={{ background: "rgba(13,12,11,0.8)" }}>
+          <span className="font-mono-num text-[12px]" style={{ color: "var(--ash)" }}>
             {previewGuardians}/{SEAT_COUNT} {d.guardiansLabel}
           </span>
         </div>
@@ -628,12 +605,8 @@ function GameOverScreen({
         whileHover={reduce ? undefined : { scale: 1.03 }}
         whileTap={reduce ? undefined : { scale: 0.96 }}
         transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="mt-7 inline-flex min-h-14 w-full max-w-xs items-center justify-center gap-2 rounded-full text-[16px] font-semibold"
-        style={{
-          background: "linear-gradient(90deg, var(--ember), var(--spark))",
-          color: "#1a0d04",
-          boxShadow: "0 16px 40px -14px rgba(255,150,60,0.8)",
-        }}
+        className="btn btn-primary mt-7 w-full max-w-xs"
+        style={{ minHeight: 52, fontSize: 16 }}
       >
         <RotateCcw size={17} />
         {d.playAgain}
@@ -670,8 +643,7 @@ function ShareBestButton({ d, best }: { d: Dict["demo"]; best: number }) {
       onClick={share}
       whileTap={TAP_PRESS}
       transition={SNAPPY}
-      className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border px-5 text-[13.5px] font-medium transition-colors hover:border-[var(--amber)]"
-      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+      className="btn btn-secondary mt-3"
     >
       {copied ? <Check size={14} style={{ color: "var(--gold)" }} /> : <Share2 size={14} style={{ color: "var(--amber)" }} />}
       {copied ? d.copied : d.share}
@@ -733,7 +705,7 @@ function MilestoneBurst({ trigger, reduce }: { trigger: number; reduce: boolean 
 function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
     <div
-      className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5"
+      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3"
       style={{ borderColor: "var(--line)", background: "var(--surface)" }}
       role="status"
       aria-label={`${label}: ${value}`}
@@ -741,7 +713,7 @@ function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: str
       <span aria-hidden style={{ color }}>
         {icon}
       </span>
-      <span aria-hidden className="font-mono-num text-[11px] uppercase tracking-wider" style={{ color: "var(--ash-dim)" }}>
+      <span aria-hidden className="text-[13px]" style={{ color: "var(--ash-dim)" }}>
         {label}
       </span>
       <span aria-hidden className="font-mono-num text-[13px] font-semibold" style={{ color }}>
@@ -827,7 +799,7 @@ function GuardianRing({ guardians, reduce }: { guardians: number; reduce: boolea
                     reduce
                       ? undefined
                       : {
-                          scale: [0, 1.25, 1],
+                          scale: 1,
                           opacity,
                           x: 0,
                           y: 0,
