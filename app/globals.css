@@ -99,6 +99,28 @@ p { text-wrap: pretty; }
   letter-spacing: -0.02em;
 }
 .font-mono-num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* Figures (embers, totals): the sans with tabular digits. Mono is kept for ranks and short
+   codes only — at display sizes its full-width comma opens a visible gap ("1 , 480"). */
+.num {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
+}
+
+/* One page frame for every route, so the content's left edge lines up with the header logo. */
+.page {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 72rem; /* = max-w-6xl, same as the header */
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .page { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
 
 /* Small label above headings. Sentence-sized, not shouting: mono, modest tracking. */
 .eyebrow {

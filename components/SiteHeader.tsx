@@ -26,6 +26,21 @@ export function RefugioMark({ size = 28 }: { size?: number }) {
   );
 }
 
+// Honest data-source label for every page that shows figures: amber dot + "sample data" until
+// the scene is pushing real rounds, green dot + "live" afterwards.
+const SOURCE_LABEL: Record<Lang, { live: string; sample: string }> = {
+  en: { live: "Live data", sample: "Preview · sample data" },
+  es: { live: "Datos en vivo", sample: "Vista previa · datos de muestra" },
+};
+export function DataSourcePill({ source, lang }: { source: "live" | "sample"; lang: Lang }) {
+  return (
+    <span className="status-pill">
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: source === "live" ? "var(--ok)" : "var(--warn)" }} />
+      {source === "live" ? SOURCE_LABEL[lang].live : SOURCE_LABEL[lang].sample}
+    </span>
+  );
+}
+
 export function SiteHeader({
   lang,
   onToggleLang,

@@ -269,7 +269,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
       <ShortcutsHelp open={showShortcuts} onClose={() => setShowShortcuts(false)} d={d} />
       <OnboardingTour step={onboardStep} onNext={() => setOnboardStep((s) => (s === null ? null : s + 1))} onDismiss={dismissOnboarding} d={d} />
 
-      <main id="main" className="relative mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
+      <main id="main" className="page pb-16">
         {/* ------------------------------------------------------------ Hero */}
         <section className="grid gap-10 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-12 lg:pt-24">
           <div className="min-w-0 lg:col-span-7">
@@ -406,7 +406,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                               <div className="flex items-stretch">
                                 <Link
                                   href={guardianHref(g.displayName)}
-                                  className="grid min-h-14 min-w-0 flex-1 grid-cols-[40px_1fr_auto] items-center gap-3 px-4 transition-colors hover:bg-[var(--surface-2)] sm:grid-cols-[40px_1fr_160px_120px] sm:gap-0"
+                                  className="grid min-h-16 min-w-0 flex-1 grid-cols-[28px_1fr_auto] items-center gap-3 py-2.5 pl-4 pr-1 transition-colors hover:bg-[var(--surface-2)] sm:min-h-14 sm:grid-cols-[40px_1fr_160px_120px] sm:gap-0 sm:px-4 sm:py-0"
                                 >
                                   <span className="flex items-center gap-1">
                                     <span className="font-mono-num text-[14px]" style={{ color: "var(--text-3)" }}>
@@ -414,14 +414,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                                     </span>
                                     <RankChangeArrow delta={rankDelta[g.displayName]} />
                                   </span>
-                                  <span className="flex min-w-0 items-center gap-3 sm:pl-4">
-                                    <span className="hidden min-[400px]:inline-flex">
-                                      <GuardianDot name={g.displayName} />
-                                    </span>
-                                    <span className="truncate text-[15px] font-medium" style={{ color: "var(--text)" }}>
-                                      {g.displayName}
-                                    </span>
-                                  </span>
+                                  <NameCell name={g.displayName} brasas={g.brasas} d={d} />
                                   <span className="hidden sm:block">
                                     <Badge brasas={g.brasas} d={d} />
                                   </span>
@@ -434,7 +427,7 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                                   onClick={() => setExpanded((prev) => (prev === g.displayName ? null : g.displayName))}
                                   aria-expanded={isOpen}
                                   aria-label={`${d.profile.roundsPlayed} — ${g.displayName}`}
-                                  className="flex w-12 shrink-0 items-center justify-center transition-colors hover:text-[var(--text)]"
+                                  className="flex w-11 shrink-0 items-center justify-center transition-colors hover:text-[var(--text)] sm:w-12"
                                   style={{ color: "var(--text-3)" }}
                                 >
                                   <motion.span
@@ -460,9 +453,6 @@ export function Wall({ bundle }: { bundle: LeaderboardBundle }) {
                                       style={{ borderColor: "var(--line)", background: "var(--ground-2)" }}
                                     >
                                       <span className="flex items-center gap-3 text-[14px]" style={{ color: "var(--text-2)" }}>
-                                        <span className="sm:hidden">
-                                          <Badge brasas={g.brasas} d={d} />
-                                        </span>
                                         {typeof g.gamesPlayed === "number" ? `${g.gamesPlayed} ${d.rounds}` : d.profile.roundsPlayed}
                                       </span>
                                       <Link href={guardianHref(g.displayName)} className="link inline-flex min-h-11 items-center gap-1 text-[14px]">
@@ -661,7 +651,7 @@ function LeaderPanel({
               <TickerNumber
                 value={leader.brasas}
                 reduce={reduce}
-                className="font-mono-num mt-1 block text-[44px] font-medium leading-none tracking-tight"
+                className="num mt-1 block text-[44px] font-semibold leading-none"
               />
             </div>
             <span className="inline-flex min-h-11 items-center gap-1 text-[14px] transition-colors group-hover:text-[var(--text)]" style={{ color: "var(--text-3)" }}>
@@ -684,7 +674,7 @@ function LeaderPanel({
         ) : (
           <div className="border-l px-4 py-4" style={{ borderColor: "var(--line)" }}>
             <dt className="text-[12px]" style={{ color: "var(--text-3)" }}>{L.metricRounds}</dt>
-            <dd className="font-mono-num mt-1 text-[20px]" style={{ color: "var(--text-3)" }}>—</dd>
+            <dd className="num mt-1 text-[20px]" style={{ color: "var(--text-3)" }}>—</dd>
           </div>
         )}
       </dl>
@@ -706,7 +696,7 @@ function Metric({ label, value, reduce, border = false }: { label: string; value
         {label}
       </dt>
       <dd className="mt-1">
-        <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[20px] font-medium" />
+        <TickerNumber value={value} reduce={reduce} className="num text-[20px] font-semibold" />
       </dd>
     </div>
   );
@@ -1104,7 +1094,7 @@ function OnboardingTour({
     <AnimatePresence>
       {open && current && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -1185,8 +1175,19 @@ function PodiumCell({
         opacity: dim ? 0.45 : 1,
       }}
     >
-      <span aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: MEDAL[rank], opacity: isFirst ? 1 : 0.6 }} />
-      <Link href={guardianHref(guardian.displayName)} className="group flex h-full flex-col gap-3 p-4 transition-colors sm:gap-4 sm:p-5 hover:bg-[var(--surface-2)]">
+      <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 sm:inset-x-0 sm:bottom-auto sm:h-0.5 sm:w-auto" style={{ background: MEDAL[rank], opacity: isFirst ? 1 : 0.6 }} />
+      {/* Phones: the exact row anatomy of ranks 4–10, plus the medal rule on the left. */}
+      <Link
+        href={guardianHref(guardian.displayName)}
+        className="grid min-h-16 grid-cols-[28px_1fr_auto] items-center gap-3 py-2.5 pl-4 pr-4 transition-colors hover:bg-[var(--surface-2)] sm:hidden"
+      >
+        <span className="font-mono-num text-[14px]" style={{ color: MEDAL[rank] }}>
+          {String(rank + 1).padStart(2, "0")}
+        </span>
+        <NameCell name={guardian.displayName} brasas={guardian.brasas} d={d} crown={isFirst} />
+        <Brasas value={guardian.brasas} reduce={reduce} accent={isFirst} />
+      </Link>
+      <Link href={guardianHref(guardian.displayName)} className="group hidden h-full flex-col gap-4 p-5 transition-colors hover:bg-[var(--surface-2)] sm:flex">
         <div className="flex items-center justify-between">
           <span className="font-mono-num text-[13px]" style={{ color: MEDAL[rank] }}>
             {String(rank + 1).padStart(2, "0")}
@@ -1236,67 +1237,67 @@ const SYSTEM_ICONS = [Flame, Armchair, Timer, Coins, Trophy, UserPlus, ServerCog
 
 // The 7 systems of the scene as one ruled grid (hairline cells), closed by an eighth cell that
 // sends you to the demo — 4×2 on desktop, 2 columns on tablet, a single column on phones.
-function HowItWorks({ d, L, reduce }: { d: Dict; L: Local; reduce: boolean }) {
+function HowItWorks({ d, L }: { d: Dict; L: Local; reduce?: boolean }) {
   return (
     <section id="how" className="mt-24 scroll-mt-24 sm:mt-32" aria-labelledby="how-title">
-      <div className="grid gap-4 lg:grid-cols-12 lg:items-end">
-        <div className="lg:col-span-6">
-          <div className="eyebrow">{d.howEyebrow}</div>
-          <h2 id="how-title" className="font-serif-display mt-2 text-[32px] font-medium leading-tight sm:text-[40px]">
-            {d.howTitle}
-          </h2>
+      <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+        {/* Editorial split: a sticky intro on the left, the seven systems as a ruled index on the
+            right — reads like a spec sheet rather than a wall of identical cards. */}
+        <div className="lg:col-span-4">
+          <div className="lg:sticky lg:top-28">
+            <div className="eyebrow">{d.howEyebrow}</div>
+            <h2 id="how-title" className="font-serif-display mt-2 text-[32px] font-medium leading-tight sm:text-[40px]">
+              {d.howTitle}
+            </h2>
+            <p className="mt-4 max-w-md text-[16px]" style={{ color: "var(--text-2)" }}>
+              {L.howLead}
+            </p>
+            <div className="mt-8 hidden border-t pt-6 lg:block" style={{ borderColor: "var(--line)" }}>
+              <p className="max-w-xs text-[15px]" style={{ color: "var(--text-3)" }}>
+                {L.tryCell}
+              </p>
+              <Link href="/demo" className="btn btn-primary mt-4">
+                <Play size={14} fill="currentColor" aria-hidden />
+                {d.cta.demo}
+              </Link>
+            </div>
+          </div>
         </div>
-        <p className="max-w-md text-[16px] lg:col-span-6 lg:justify-self-end" style={{ color: "var(--text-2)" }}>
-          {L.howLead}
-        </p>
-      </div>
 
-      <ol
-        className="mt-8 grid gap-px overflow-hidden rounded-[14px] border sm:grid-cols-2 lg:grid-cols-4"
-        style={{ borderColor: "var(--line)", background: "var(--line)" }}
-      >
-        {d.systems.map((s, i) => {
-          const Icon = SYSTEM_ICONS[i] ?? Flame;
-          return (
-            <motion.li
-              key={s.name}
-              className="flex flex-col p-6"
-              style={{ background: "var(--surface)" }}
-              initial={reduce ? undefined : { opacity: 0 }}
-              whileInView={reduce ? undefined : { opacity: 1 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.4, ease: EASE_OUT, delay: Math.min(i * 0.04, 0.2) }}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border"
-                  style={{ borderColor: "var(--line-strong)", background: "var(--surface-2)" }}
-                >
-                  <Icon size={17} strokeWidth={1.75} aria-hidden style={{ color: "var(--ember)" }} />
-                </span>
-                <span className="font-mono-num text-[12px]" style={{ color: "var(--text-3)" }}>
+        <ol className="border-t lg:col-span-8" style={{ borderColor: "var(--line-strong)" }}>
+          {d.systems.map((s, i) => {
+            const Icon = SYSTEM_ICONS[i] ?? Flame;
+            const lead = i === 0;
+            return (
+              <li
+                key={s.name}
+                className="grid grid-cols-[40px_1fr] gap-x-4 gap-y-1.5 border-b py-6 sm:grid-cols-[56px_220px_1fr] sm:gap-x-6 sm:py-7"
+                style={{ borderColor: "var(--line)" }}
+              >
+                <span className="font-mono-num pt-0.5 text-[13px]" style={{ color: lead ? "var(--ember)" : "var(--text-3)" }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-              </div>
-              <h3 className="mt-5 text-[16px] font-semibold" style={{ color: "var(--text)" }}>
-                {s.name}
-              </h3>
-              <p className="mt-1.5 text-[15px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-                {s.blurb}
-              </p>
-            </motion.li>
-          );
-        })}
-        <li className="flex flex-col justify-between gap-6 p-6" style={{ background: "var(--surface-2)" }}>
-          <p className="text-[15px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-            {L.tryCell}
-          </p>
-          <Link href="/demo" className="btn btn-primary self-start">
-            <Play size={14} fill="currentColor" aria-hidden />
-            {d.cta.demo}
-          </Link>
-        </li>
-      </ol>
+                <h3 className="flex items-start gap-2.5 text-[17px] font-semibold leading-snug" style={{ color: "var(--text)" }}>
+                  <Icon size={17} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0" style={{ color: lead ? "var(--ember)" : "var(--text-3)" }} />
+                  {s.name}
+                </h3>
+                <p className="col-start-2 text-[15px] leading-relaxed sm:col-start-3 sm:row-start-1" style={{ color: "var(--text-2)" }}>
+                  {s.blurb}
+                </p>
+              </li>
+            );
+          })}
+          <li className="flex flex-col gap-4 py-6 lg:hidden">
+            <p className="text-[15px]" style={{ color: "var(--text-3)" }}>
+              {L.tryCell}
+            </p>
+            <Link href="/demo" className="btn btn-primary self-start">
+              <Play size={14} fill="currentColor" aria-hidden />
+              {d.cta.demo}
+            </Link>
+          </li>
+        </ol>
+      </div>
     </section>
   );
 }
@@ -1409,6 +1410,54 @@ export function GuardianDot({ big = false, name }: { big?: boolean; name?: strin
   );
 }
 
+// Monogram + handle, with the tier tucked under the name on phones (from `sm` up the tier has
+// its own column). Shared by leaderboard rows, the podium on phones and the full roster, so the
+// list reads as one system at every rank.
+export function NameCell({
+  name,
+  brasas,
+  d,
+  crown = false,
+  className = "sm:pl-4",
+}: {
+  name: string;
+  brasas: number;
+  d: Dict;
+  crown?: boolean;
+  className?: string;
+}) {
+  return (
+    <span className={`flex min-w-0 items-center gap-3 ${className}`}>
+      <span className="hidden min-[360px]:inline-flex">
+        <GuardianDot name={name} />
+      </span>
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[15px] font-medium leading-tight" style={{ color: "var(--text)" }} title={name}>
+            {name}
+          </span>
+          {crown && <Crown size={13} aria-hidden className="shrink-0" style={{ color: "var(--gold)" }} />}
+        </span>
+        <span className="sm:hidden">
+          <TierText brasas={brasas} d={d} />
+        </span>
+      </span>
+    </span>
+  );
+}
+
+// Compact tier label (dot + word) for tight rows, where the boxed Badge would eat the name.
+export function TierText({ brasas, d }: { brasas: number; d: Dict }) {
+  const b = badgeForBrasas(brasas, d);
+  if (!b) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px] leading-none" style={{ color: "var(--text-3)" }}>
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: b.color }} />
+      {b.label}
+    </span>
+  );
+}
+
 export function Badge({ brasas, d }: { brasas: number; d: Dict }) {
   const b = badgeForBrasas(brasas, d);
   if (!b) return null;
@@ -1437,7 +1486,7 @@ export function Brasas({
   return (
     <span className="inline-flex items-center gap-1.5" style={{ color: accent ? "var(--ember)" : "var(--text)" }}>
       <Flame size={large ? 16 : 14} strokeWidth={1.8} aria-hidden style={{ color: "var(--ember)" }} />
-      <TickerNumber value={value} reduce={reduce} className={`font-mono-num font-medium ${large ? "text-[18px]" : "text-[15px]"}`} />
+      <TickerNumber value={value} reduce={reduce} className={`num font-semibold ${large ? "text-[18px]" : "text-[15px]"}`} />
     </span>
   );
 }
@@ -1445,7 +1494,7 @@ export function Brasas({
 function FooterStat({ label, value, reduce }: { label: string; value: number; reduce: boolean }) {
   return (
     <div className="flex items-baseline gap-2.5">
-      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[22px] font-medium" />
+      <TickerNumber value={value} reduce={reduce} className="num text-[22px] font-semibold" />
       <span className="text-[14px]" style={{ color: "var(--text-3)" }}>
         {label}
       </span>
