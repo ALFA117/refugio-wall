@@ -1,16 +1,19 @@
+// Same frame as the profile it stands in for: breadcrumb, monogram + name, then the facts band.
 export default function Loading() {
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-8">
-      <div className="flex items-center justify-between">
-        <div className="skeleton h-4 w-28 rounded-full" />
-        <div className="skeleton h-11 w-16 rounded-full" />
-      </div>
-      <div className="mt-16 flex flex-col items-center">
-        <div className="skeleton h-[84px] w-[84px] rounded-full" />
-        <div className="skeleton mt-5 h-8 w-48 rounded-full" />
-        <div className="skeleton mt-3 h-4 w-32 rounded-full" />
-        <div className="skeleton mt-8 h-14 w-40 rounded-full" />
-      </div>
-    </main>
+    <>
+      <div className="h-16 border-b" style={{ borderColor: "var(--line)" }} />
+      <main className="page pb-24 pt-8 sm:pt-12" aria-busy="true">
+        <div className="skeleton h-5 w-40 rounded" />
+        <div className="mt-8 flex items-center gap-5">
+          <div className="skeleton h-[72px] w-[72px] rounded-2xl" />
+          <div className="flex flex-col gap-3">
+            <div className="skeleton h-6 w-44 rounded-full" />
+            <div className="skeleton h-10 w-64 max-w-[60vw] rounded-lg" />
+          </div>
+        </div>
+        <div className="skeleton mt-8 h-48 rounded-[14px]" />
+      </main>
+    </>
   );
 }

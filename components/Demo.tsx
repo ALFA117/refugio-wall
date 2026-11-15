@@ -221,10 +221,14 @@ export function Demo() {
             transition={{ duration: 0.4, ease: EASE_OUT }}
           >
             {/* HUD chips */}
-            <div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-2">
-              <Chip icon={<Flame size={13} />} label={d.intensityLabel} value={`${intensity.toFixed(2)}×`} color="var(--amber)" />
-              <Chip icon={<Trophy size={13} />} label={d.streak} value={`${streak}`} color="var(--text)" />
-              <Chip icon={<Trophy size={13} />} label={d.best} value={`${best}`} color="var(--spark)" />
+            {/* One ruled strip of three equal cells — never wraps into a lopsided 2 + 1. */}
+            <div
+              className="relative z-10 mt-6 grid grid-cols-3 overflow-hidden rounded-[10px] border"
+              style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+            >
+              <Chip icon={<Flame size={13} />} label={d.intensityLabel} value={`${intensity.toFixed(2)}×`} color="var(--ember)" />
+              <Chip icon={<Trophy size={13} />} label={d.streak} value={`${streak}`} color="var(--text)" border />
+              <Chip icon={<Trophy size={13} />} label={d.best} value={`${best}`} color="var(--text)" border />
             </div>
 
             {/* The fire card — border pulses red when health is critically low */}
@@ -374,13 +378,13 @@ export function Demo() {
                   </span>
                 </div>
 
-                <div className="mt-4 flex gap-2.5">
+                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-[1.4fr_1fr]">
                   <motion.button
                     type="button"
                     whileTap={reduce ? undefined : { scale: 0.96 }}
                     disabled={guardians >= SEAT_COUNT}
                     onClick={() => setGuardians((g) => Math.min(SEAT_COUNT, g + 1))}
-                    className="btn btn-primary flex-1 whitespace-normal text-center"
+                    className="btn btn-primary"
                   >
                     <Flame size={15} />
                     {guardians >= SEAT_COUNT ? d.seatsFull : d.addGuardian}
@@ -390,7 +394,7 @@ export function Demo() {
                     onClick={() => setPhase("start")}
                     whileTap={reduce ? undefined : TAP_PRESS}
                     transition={SNAPPY}
-                    className="btn btn-secondary flex-1 whitespace-normal text-center"
+                    className="btn btn-secondary"
                   >
                     <RotateCcw size={14} />
                     {d.emptyCircle}
@@ -702,21 +706,19 @@ function MilestoneBurst({ trigger, reduce }: { trigger: number; reduce: boolean 
 
 /* ------------------------------------------------------------------- Chip */
 
-function Chip({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function Chip({ icon, label, value, color, border = false }: { icon: React.ReactNode; label: string; value: string; color: string; border?: boolean }) {
   return (
     <div
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3"
-      style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+      className={`flex min-w-0 flex-col gap-1.5 px-3 py-2.5 text-left sm:px-4 ${border ? "border-l" : ""}`}
+      style={{ borderColor: "var(--line)" }}
       role="status"
       aria-label={`${label}: ${value}`}
     >
-      <span aria-hidden style={{ color }}>
-        {icon}
+      <span aria-hidden className="flex min-w-0 items-center gap-1.5 text-[12px] leading-tight sm:text-[13px]" style={{ color: "var(--text-3)" }}>
+        <span className="hidden shrink-0 min-[400px]:inline-flex">{icon}</span>
+        <span className="truncate">{label}</span>
       </span>
-      <span aria-hidden className="text-[13px]" style={{ color: "var(--ash-dim)" }}>
-        {label}
-      </span>
-      <span aria-hidden className="font-mono-num text-[13px] font-semibold" style={{ color }}>
+      <span aria-hidden className="num text-[18px] font-semibold leading-none" style={{ color }}>
         {value}
       </span>
     </div>

@@ -3,21 +3,28 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, Share2, Crown, Check, Swords } from "lucide-react";
+import { Share2, Crown, Check, Swords, ChevronRight } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
-import { SiteHeader } from "./SiteHeader";
+import { SiteHeader, DataSourcePill } from "./SiteHeader";
 import { Sparkline } from "./Sparkline";
+import { guardianHref } from "./Wall";
+
+const LOCAL = {
+  en: { guardians: "Guardians", leading: "Leading the Wall", tier: "Tier", rounds: "Rounds played", rank: "Rank", allGuardians: "See all guardians" },
+  es: { guardians: "Guardianes", leading: "A la cabeza del Muro", tier: "Rango", rounds: "Rondas jugadas", rank: "Posición", allGuardians: "Ver todos los guardianes" },
+} as const;
 
 export function GuardianProfile({
   guardian,
   name,
   rank,
   total,
+  source,
   suggestion,
   trend,
 }: {
@@ -32,138 +39,149 @@ export function GuardianProfile({
   const reduce = useReducedMotion();
   const [lang, setLang] = useLang();
   const d = DICTS[lang];
+  const L = LOCAL[lang];
   const isFirst = rank === 0;
-  // "Ahead of X%" — only meaningful once there's more than one guardian to compare against.
-  const percentile = guardian && rank >= 0 && total > 1 ? Math.round(((total - rank - 1) / (total - 1)) * 100) : null;
+  // "Ahead of X%" — only meaningful below #1 and with more than one guardian. The leader gets
+  // "Leading the Wall" instead of the awkward "Ahead of 100%".
+  const percentile = guardian && rank > 0 && total > 1 ? Math.round(((total - rank - 1) / (total - 1)) * 100) : null;
+  const badge = guardian ? badgeForBrasas(guardian.brasas, d) : null;
 
   return (
     <>
-    <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
-    <main id="main" className="relative mx-auto flex flex-col w-full max-w-2xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
-      {guardian && (
-        // Full-bleed glow behind the header — breaks out of the max-w-lg column so the profile
-        // has a real light source instead of the avatar floating on flat black, same idea as
-        // the Wall's hero card but as an edge-to-edge band rather than a bordered surface.
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-screen -translate-x-1/2"
-          style={{
-            background: "radial-gradient(60% 55% at 50% 0%, rgba(232,118,60,0.06), rgba(255,150,60,0) 70%)",
-          }}
-        />
-      )}
+      <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
+      <main id="main" className="page pb-24 pt-8 sm:pt-12">
+        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-[14px]" style={{ color: "var(--text-3)" }}>
+          <Link href="/guardians" className="link inline-flex min-h-11 items-center" style={{ color: "var(--text-2)" }}>
+            {L.guardians}
+          </Link>
+          <ChevronRight size={14} aria-hidden className="shrink-0" />
+          <span className="truncate" aria-current="page">
+            {name}
+          </span>
+        </nav>
 
-      {guardian ? (
-        <motion.section
-          className="relative z-10 mt-16 flex flex-col items-center text-center"
-          initial={reduce ? undefined : { opacity: 0, y: 20 }}
-          animate={reduce ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE_OUT }}
-        >
-          {isFirst && (
-            <motion.div
-              className="mb-3"
-            >
-              <Crown size={26} strokeWidth={1.6} style={{ color: "var(--gold)" }} />
-            </motion.div>
-          )}
+        {guardian ? (
           <motion.div
-            initial={reduce ? undefined : { scale: 0.7 }}
-            animate={reduce ? undefined : { scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
-            aria-hidden
-            className="font-serif-display flex items-center justify-center rounded-2xl border text-[36px] font-medium"
-            style={{ width: 84, height: 84, borderColor: "var(--line-strong)", background: "var(--surface-2)", color: "var(--text)" }}
+            initial={reduce ? undefined : { opacity: 0, y: 12 }}
+            animate={reduce ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: EASE_OUT }}
           >
-            {guardian.displayName.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase() || "·"}
-          </motion.div>
-          <h1
-            className="font-serif-display mt-6 max-w-full truncate px-2 text-[36px] font-medium leading-tight sm:text-[48px]"
-            style={{ color: "var(--warm-white)" }}
-            title={guardian.displayName}
-          >
-            {guardian.displayName}
-          </h1>
+            <header className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+                <div
+                  aria-hidden
+                  className="font-serif-display flex shrink-0 items-center justify-center rounded-2xl border text-[30px] font-medium sm:text-[36px]"
+                  style={{ width: 72, height: 72, borderColor: isFirst ? "var(--gold)" : "var(--line-strong)", background: "var(--surface-2)", color: "var(--text)" }}
+                >
+                  {guardian.displayName.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase() || "·"}
+                </div>
+                <div className="min-w-0">
+                  <DataSourcePill source={source} lang={lang} />
+                  <h1
+                    className="font-serif-display mt-2 truncate text-[28px] font-medium leading-tight sm:text-[48px]"
+                    style={{ color: "var(--text)" }}
+                    title={guardian.displayName}
+                  >
+                    {guardian.displayName}
+                  </h1>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[15px]" style={{ color: "var(--text-2)" }}>
+                    {isFirst && <Crown size={15} aria-hidden style={{ color: "var(--gold)" }} />}
+                    <span>{isFirst ? L.leading : percentile !== null && percentile > 0 ? d.profile.aheadOfPct.replace("{pct}", String(percentile)) : `${d.profile.rank} #${rank + 1}`}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <ShareButton d={d} />
+                <Link href={`/compare?a=${encodeURIComponent(guardian.displayName)}`} className="btn btn-secondary">
+                  <Swords size={15} aria-hidden style={{ color: "var(--text-3)" }} />
+                  {d.comparePage.compare}
+                </Link>
+              </div>
+            </header>
 
-          <div className="mt-2 font-mono-num text-[14px]" style={{ color: "var(--text-2)" }}>
-            {d.profile.rank} #{rank + 1} {d.profile.of} {total}
-          </div>
-          {percentile !== null && percentile > 0 && (
-            <div className="mt-1 text-[14px]" style={{ color: "var(--ash-dim)" }}>
-              {d.profile.aheadOfPct.replace("{pct}", String(percentile))}
-            </div>
-          )}
+            <section className="panel mt-8 grid overflow-hidden lg:grid-cols-12" aria-label={d.brasas}>
+              <div className="border-b p-6 sm:p-8 lg:col-span-5 lg:border-b-0 lg:border-r" style={{ borderColor: "var(--line)" }}>
+                <div className="text-[14px] capitalize" style={{ color: "var(--text-3)" }}>
+                  {d.brasas}
+                </div>
+                <TickerNumber value={guardian.brasas} reduce={!!reduce} className="num mt-3 block text-[52px] font-semibold leading-none sm:text-[64px]" />
+                {trend && trend.length >= 2 ? (
+                  <div className="mt-5 flex items-center gap-3">
+                    <Sparkline values={trend} />
+                    <span className="text-[13px]" style={{ color: "var(--text-3)" }}>
+                      {d.profile.trend}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-4 h-1 w-16 rounded-full" style={{ background: "var(--ember)" }} aria-hidden />
+                )}
+              </div>
+              <dl className="grid grid-cols-2 sm:grid-cols-3 lg:col-span-7">
+                <Fact label={L.rank}>
+                  <span className="num">#{rank + 1}</span>
+                  <span className="ml-1.5 text-[14px] font-normal" style={{ color: "var(--text-3)" }}>
+                    {d.profile.of} {total}
+                  </span>
+                </Fact>
+                <Fact label={L.rounds} border>
+                  <span className="num">{typeof guardian.gamesPlayed === "number" ? guardian.gamesPlayed : "—"}</span>
+                </Fact>
+                <Fact label={L.tier} className="col-span-2 border-t sm:col-span-1 sm:border-l sm:border-t-0">
+                  {badge ? (
+                    <span className="inline-flex items-center gap-2 text-[18px] sm:text-[22px]">
+                      <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: badge.color }} />
+                      {badge.label}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </Fact>
+              </dl>
+            </section>
 
-          <div className="mt-8 flex items-end gap-2" style={{ color: "var(--text)" }}>
-            <Flame size={28} strokeWidth={1.8} className="mb-1.5" style={{ color: "var(--ember)" }} />
-            <TickerNumber
-              value={guardian.brasas}
-              reduce={!!reduce}
-              className="font-mono-num text-5xl font-medium leading-none tracking-tight sm:text-6xl"
-            />
-            <span className="mb-2 text-[15px]" style={{ color: "var(--ash)" }}>
-              {d.brasas}
-            </span>
-          </div>
-
-          <div className="mt-6 flex items-center gap-3">
-            <Badge label={badgeForBrasas(guardian.brasas, d)} />
-            {typeof guardian.gamesPlayed === "number" && (
-              <span className="font-mono-num text-[13px]" style={{ color: "var(--ash)" }}>
-                {guardian.gamesPlayed} {d.profile.roundsPlayed}
-              </span>
-            )}
-          </div>
-
-          {trend && trend.length >= 2 && (
-            <div className="mt-5 flex flex-col items-center gap-1.5">
-              <Sparkline values={trend} />
-              <span className="text-[12px]" style={{ color: "var(--ash-dim)" }}>
-                {d.profile.trend}
-              </span>
-            </div>
-          )}
-
-          <div className="mt-10 flex items-center gap-3">
-            <ShareButton d={d} />
-            <Link
-              href={`/compare?a=${encodeURIComponent(guardian.displayName)}`}
-              className="btn btn-secondary"
-            >
-              <Swords size={15} aria-hidden style={{ color: "var(--text-3)" }} />
-              {d.comparePage.compare}
-            </Link>
-          </div>
-        </motion.section>
-      ) : (
-        <section className="relative z-10 mt-24 flex flex-col items-center text-center">
-          <div
-            className="rounded-2xl"
-            style={{ width: 64, height: 64, background: "var(--surface-2)", border: "1px solid var(--line-strong)" }}
-          />
-          <h1 className="font-serif-display mt-6 text-2xl font-semibold" style={{ color: "var(--warm-white)" }}>
-            {d.profile.notFound}
-          </h1>
-          <p className="mt-2 max-w-xs text-[14px]" style={{ color: "var(--ash)" }}>
-            “{name}” — {d.profile.notFoundBody}
-          </p>
-          {suggestion && (
-            <p className="mt-4 text-[14px]" style={{ color: "var(--ash-dim)" }}>
-              {d.profile.didYouMean}{" "}
-              <Link href={`/guardians/${encodeURIComponent(suggestion)}`} className="font-medium transition-colors hover:text-[var(--spark)]" style={{ color: "var(--amber)" }}>
-                {suggestion}
+            <div className="mt-6">
+              <Link href="/guardians" className="link inline-flex min-h-11 items-center text-[15px]">
+                {L.allGuardians}
               </Link>
-              ?
+            </div>
+          </motion.div>
+        ) : (
+          <section className="panel mt-6 max-w-xl p-6 sm:p-8">
+            <h1 className="font-serif-display text-[30px] font-medium leading-tight" style={{ color: "var(--text)" }}>
+              {d.profile.notFound}
+            </h1>
+            <p className="mt-2 text-[16px]" style={{ color: "var(--text-2)" }}>
+              “{name}” — {d.profile.notFoundBody}
             </p>
-          )}
-        </section>
-      )}
-
-      <div className="relative z-10 mt-auto pt-16 text-center text-[13px]" style={{ color: "var(--text-3)" }}>
-        Refugio · Built on Decentraland
-      </div>
-    </main>
+            {suggestion && (
+              <p className="mt-4 text-[15px]" style={{ color: "var(--text-3)" }}>
+                {d.profile.didYouMean}{" "}
+                <Link href={guardianHref(suggestion)} className="link font-medium">
+                  {suggestion}
+                </Link>
+                ?
+              </p>
+            )}
+            <Link href="/guardians" className="btn btn-secondary mt-6">
+              {L.allGuardians}
+            </Link>
+          </section>
+        )}
+      </main>
     </>
+  );
+}
+
+function Fact({ label, children, border = false, className = "" }: { label: string; children: React.ReactNode; border?: boolean; className?: string }) {
+  return (
+    <div className={`flex min-w-0 flex-col justify-between gap-3 p-4 sm:p-6 ${border ? "border-l" : ""} ${className}`} style={{ borderColor: "var(--line)" }}>
+      <dt className="text-[13px] leading-snug sm:text-[14px]" style={{ color: "var(--text-3)" }}>
+        {label}
+      </dt>
+      <dd className="text-[24px] font-semibold leading-none sm:text-[30px]" style={{ color: "var(--text)" }}>
+        {children}
+      </dd>
+    </div>
   );
 }
 
@@ -189,27 +207,9 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
     }
   }
   return (
-    <motion.button
-      onClick={share}
-      whileTap={TAP_PRESS}
-      transition={SNAPPY}
-      className="btn btn-primary"
-    >
+    <motion.button onClick={share} whileTap={TAP_PRESS} transition={SNAPPY} className="btn btn-primary">
       {copied ? <Check size={15} aria-hidden /> : <Share2 size={15} aria-hidden />}
       {copied ? d.profile.copied : d.profile.share}
     </motion.button>
-  );
-}
-
-function Badge({ label }: { label: { label: string; color: string } | null }) {
-  if (!label) return null;
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[13px] font-medium"
-      style={{ borderColor: "var(--line-strong)", color: "var(--text-2)", background: "var(--ground-2)" }}
-    >
-      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: label.color }} />
-      {label.label}
-    </span>
   );
 }
