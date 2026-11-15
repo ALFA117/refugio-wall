@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Flame, Crown, Search, X } from "lucide-react";
+import { Flame, Crown, Search, X } from "lucide-react";
 import type { Guardian } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
-import { LangToggle } from "./LangToggle";
+import { SiteHeader } from "./SiteHeader";
 import { AmbientEmbers, GuardianDot, Badge, guardianHref } from "./Wall";
 import { TickerNumber } from "./TickerNumber";
 
@@ -45,24 +45,14 @@ export function CompareView({
   }
 
   return (
-    <main className="relative mx-auto min-h-dvh w-full max-w-2xl px-5 pb-24 pt-14 sm:pt-20">
+    <>
+    <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
+    <main id="main" className="relative mx-auto w-full max-w-3xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
       <AmbientEmbers reduce={!!reduce} />
 
-      <div className="relative z-10 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
-          style={{ color: "var(--ash)" }}
-        >
-          <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
-          {d.comparePage.back}
-        </Link>
-        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
-      </div>
-
-      <header className="relative z-10 mt-8 text-center">
+      <header className="relative z-10">
         <div className="eyebrow">{d.comparePage.eyebrow}</div>
-        <h1 className="font-serif-display mx-auto mt-3 max-w-[16ch] text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="font-serif-display mt-3 text-[36px] font-medium leading-tight sm:text-[44px]">
           {d.comparePage.title}
         </h1>
       </header>
@@ -89,6 +79,7 @@ export function CompareView({
         </motion.div>
       )}
     </main>
+    </>
   );
 }
 
@@ -129,28 +120,28 @@ function Slot({
           type="button"
           onClick={() => onPick("")}
           aria-label={d.comparePage.clear}
-          className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:text-[var(--warm-white)]"
+          className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:text-[var(--warm-white)]"
           style={{ color: "var(--ash-dim)" }}
         >
           <X size={14} />
         </button>
         {rank === 0 && <Crown size={18} style={{ color: "var(--gold)" }} className="mb-1" />}
-        <GuardianDot big />
+        <GuardianDot big name={guardian.displayName} />
         <Link
           href={guardianHref(guardian.displayName)}
-          className="font-serif-display mt-3 max-w-full truncate px-2 text-lg font-semibold transition-colors hover:text-[var(--spark)]"
+          className="font-serif-display mt-3 max-w-full truncate px-2 text-[22px] font-medium transition-colors hover:text-[var(--spark)]"
           style={{ color: "var(--warm-white)" }}
         >
           {guardian.displayName}
         </Link>
         {rank >= 0 && (
-          <div className="mt-1 font-mono-num text-[12px]" style={{ color: "var(--violet)" }}>
+          <div className="mt-1 font-mono-num text-[13px]" style={{ color: "var(--text-3)" }}>
             #{rank + 1}
           </div>
         )}
-        <div className="mt-3 flex items-center gap-1.5" style={{ color: "var(--spark)" }}>
+        <div className="mt-3 flex items-center gap-1.5" style={{ color: "var(--text)" }}>
           <Flame size={16} />
-          <TickerNumber value={guardian.brasas} reduce={reduce} className="font-mono-num text-xl font-semibold" />
+          <TickerNumber value={guardian.brasas} reduce={reduce} className="font-mono-num text-[28px] font-medium" />
         </div>
         {badge && (
           <span className="mt-2">
@@ -173,7 +164,7 @@ function Slot({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={d.comparePage.pickPlaceholder}
-        className="w-full rounded-lg border bg-transparent px-3 py-2 text-center text-[14px] outline-none"
+        className="min-h-11 w-full rounded-[10px] border bg-transparent px-3 text-center text-[16px] outline-none focus:border-[var(--line-ember)]"
         style={{ borderColor: "var(--line)", color: "var(--warm-white)" }}
       />
       <AnimatePresence>
@@ -189,7 +180,7 @@ function Slot({
                 <button
                   type="button"
                   onClick={() => onPick(g.displayName)}
-                  className="min-h-11 w-full truncate rounded-lg px-3 py-2 text-left text-[13px] transition-colors hover:bg-[var(--surface-2)]"
+                  className="min-h-11 w-full truncate rounded-lg px-3 py-2 text-left text-[15px] transition-colors hover:bg-[var(--surface-2)]"
                   style={{ color: "var(--warm-white)" }}
                 >
                   {g.displayName}

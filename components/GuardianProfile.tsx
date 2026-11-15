@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, ArrowLeft, Share2, Crown, Check, Swords } from "lucide-react";
+import { Flame, Share2, Crown, Check, Swords } from "lucide-react";
 import type { Guardian, Source } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { badgeForBrasas } from "@/lib/badges";
 import { EASE_OUT, TAP_PRESS, SNAPPY } from "@/lib/motion";
 import { useLang } from "./useLang";
 import { TickerNumber } from "./TickerNumber";
-import { LangToggle } from "./LangToggle";
+import { SiteHeader } from "./SiteHeader";
 import { Sparkline } from "./Sparkline";
 
 export function GuardianProfile({
@@ -37,7 +37,9 @@ export function GuardianProfile({
   const percentile = guardian && rank >= 0 && total > 1 ? Math.round(((total - rank - 1) / (total - 1)) * 100) : null;
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-8">
+    <>
+    <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
+    <main id="main" className="relative mx-auto flex flex-col w-full max-w-2xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
       {guardian && (
         // Full-bleed glow behind the header — breaks out of the max-w-lg column so the profile
         // has a real light source instead of the avatar floating on flat black, same idea as
@@ -46,22 +48,10 @@ export function GuardianProfile({
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-screen -translate-x-1/2"
           style={{
-            background: "radial-gradient(60% 55% at 50% 0%, rgba(255,150,60,0.16), rgba(255,150,60,0) 70%)",
+            background: "radial-gradient(60% 55% at 50% 0%, rgba(232,118,60,0.06), rgba(255,150,60,0) 70%)",
           }}
         />
       )}
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
-          style={{ color: "var(--ash)" }}
-        >
-          <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
-          {d.profile.back}
-        </Link>
-        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
-      </div>
 
       {guardian ? (
         <motion.section
@@ -72,9 +62,7 @@ export function GuardianProfile({
         >
           {isFirst && (
             <motion.div
-              animate={reduce ? undefined : { y: [0, -4, 0] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              className="mb-2"
+              className="mb-3"
             >
               <Crown size={26} strokeWidth={1.6} style={{ color: "var(--gold)" }} />
             </motion.div>
@@ -83,37 +71,35 @@ export function GuardianProfile({
             initial={reduce ? undefined : { scale: 0.7 }}
             animate={reduce ? undefined : { scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
-            className="rounded-full"
-            style={{
-              width: 84,
-              height: 84,
-              background: "radial-gradient(circle at 35% 30%, var(--spark), var(--ember) 72%)",
-              boxShadow: "0 0 40px rgba(255,150,60,0.6)",
-            }}
-          />
+            aria-hidden
+            className="font-serif-display flex items-center justify-center rounded-2xl border text-[36px] font-medium"
+            style={{ width: 84, height: 84, borderColor: "var(--line-strong)", background: "var(--surface-2)", color: "var(--text)" }}
+          >
+            {guardian.displayName.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase() || "·"}
+          </motion.div>
           <h1
-            className="font-serif-display mt-5 max-w-full truncate px-2 text-3xl font-semibold tracking-tight sm:text-4xl"
+            className="font-serif-display mt-6 max-w-full truncate px-2 text-[36px] font-medium leading-tight sm:text-[48px]"
             style={{ color: "var(--warm-white)" }}
             title={guardian.displayName}
           >
             {guardian.displayName}
           </h1>
 
-          <div className="mt-2 font-mono-num text-[13px] tracking-wide" style={{ color: "var(--violet)" }}>
+          <div className="mt-2 font-mono-num text-[14px]" style={{ color: "var(--text-2)" }}>
             {d.profile.rank} #{rank + 1} {d.profile.of} {total}
           </div>
           {percentile !== null && percentile > 0 && (
-            <div className="mt-1 text-[12.5px]" style={{ color: "var(--ash-dim)" }}>
+            <div className="mt-1 text-[14px]" style={{ color: "var(--ash-dim)" }}>
               {d.profile.aheadOfPct.replace("{pct}", String(percentile))}
             </div>
           )}
 
-          <div className="mt-8 flex items-end gap-2" style={{ color: "var(--spark)" }}>
-            <Flame size={30} strokeWidth={1.8} className="mb-1.5" />
+          <div className="mt-8 flex items-end gap-2" style={{ color: "var(--text)" }}>
+            <Flame size={28} strokeWidth={1.8} className="mb-1.5" style={{ color: "var(--ember)" }} />
             <TickerNumber
               value={guardian.brasas}
               reduce={!!reduce}
-              className="font-mono-num text-5xl font-semibold leading-none sm:text-6xl"
+              className="font-mono-num text-5xl font-medium leading-none tracking-tight sm:text-6xl"
             />
             <span className="mb-2 text-[15px]" style={{ color: "var(--ash)" }}>
               {d.brasas}
@@ -132,7 +118,7 @@ export function GuardianProfile({
           {trend && trend.length >= 2 && (
             <div className="mt-5 flex flex-col items-center gap-1.5">
               <Sparkline values={trend} />
-              <span className="text-[11px]" style={{ color: "var(--ash-dim)" }}>
+              <span className="text-[12px]" style={{ color: "var(--ash-dim)" }}>
                 {d.profile.trend}
               </span>
             </div>
@@ -142,10 +128,9 @@ export function GuardianProfile({
             <ShareButton d={d} />
             <Link
               href={`/compare?a=${encodeURIComponent(guardian.displayName)}`}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
-              style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+              className="btn btn-secondary"
             >
-              <Swords size={15} style={{ color: "var(--amber)" }} />
+              <Swords size={15} aria-hidden style={{ color: "var(--text-3)" }} />
               {d.comparePage.compare}
             </Link>
           </div>
@@ -153,8 +138,8 @@ export function GuardianProfile({
       ) : (
         <section className="relative z-10 mt-24 flex flex-col items-center text-center">
           <div
-            className="rounded-full"
-            style={{ width: 64, height: 64, background: "var(--surface-2)", border: "1px solid var(--line)" }}
+            className="rounded-2xl"
+            style={{ width: 64, height: 64, background: "var(--surface-2)", border: "1px solid var(--line-strong)" }}
           />
           <h1 className="font-serif-display mt-6 text-2xl font-semibold" style={{ color: "var(--warm-white)" }}>
             {d.profile.notFound}
@@ -174,10 +159,11 @@ export function GuardianProfile({
         </section>
       )}
 
-      <div className="relative z-10 mt-auto pt-16 text-center font-mono-num text-[11px] tracking-widest" style={{ color: "var(--ash-dim)" }}>
-        REFUGIO · 🔥 · BUILT ON DECENTRALAND
+      <div className="relative z-10 mt-auto pt-16 text-center text-[13px]" style={{ color: "var(--text-3)" }}>
+        Refugio · Built on Decentraland
       </div>
     </main>
+    </>
   );
 }
 
@@ -207,10 +193,9 @@ function ShareButton({ d }: { d: (typeof DICTS)["en"] }) {
       onClick={share}
       whileTap={TAP_PRESS}
       transition={SNAPPY}
-      className="inline-flex min-h-11 items-center gap-2 rounded-lg border px-5 text-[14px] font-medium transition-colors hover:border-[var(--amber)]"
-      style={{ borderColor: "var(--line-strong)", color: "var(--warm-white)" }}
+      className="btn btn-primary"
     >
-      {copied ? <Check size={15} style={{ color: "var(--gold)" }} /> : <Share2 size={15} style={{ color: "var(--amber)" }} />}
+      {copied ? <Check size={15} aria-hidden /> : <Share2 size={15} aria-hidden />}
       {copied ? d.profile.copied : d.profile.share}
     </motion.button>
   );
@@ -220,9 +205,10 @@ function Badge({ label }: { label: { label: string; color: string } | null }) {
   if (!label) return null;
   return (
     <span
-      className="font-mono-num rounded-full px-2.5 py-0.5 text-[11px] uppercase tracking-wider"
-      style={{ color: label.color, border: `1px solid ${label.color}`, opacity: 0.9 }}
+      className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[13px] font-medium"
+      style={{ borderColor: "var(--line-strong)", color: "var(--text-2)", background: "var(--ground-2)" }}
     >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: label.color }} />
       {label.label}
     </span>
   );

@@ -3,13 +3,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Users, Flame, Swords, TrendingUp, Crown, Zap } from "lucide-react";
+import { Users, Flame, Swords, TrendingUp, Crown, Zap } from "lucide-react";
 import type { Guardian } from "@/lib/leaderboard";
 import { DICTS } from "@/lib/i18n";
 import { BADGE_TIERS } from "@/lib/badges";
 import { EASE_OUT } from "@/lib/motion";
 import { useLang } from "./useLang";
-import { LangToggle } from "./LangToggle";
+import { SiteHeader } from "./SiteHeader";
 import { AmbientEmbers, guardianHref } from "./Wall";
 import { TickerNumber } from "./TickerNumber";
 
@@ -34,32 +34,22 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
   }));
 
   return (
-    <main className="relative mx-auto min-h-dvh w-full max-w-2xl px-5 pb-24 pt-14 sm:pt-20">
+    <>
+    <SiteHeader lang={lang} onToggleLang={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
+    <main id="main" className="relative mx-auto w-full max-w-4xl px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
       <AmbientEmbers reduce={!!reduce} />
 
-      <div className="relative z-10 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center gap-1.5 text-[13px] transition-colors hover:text-[var(--warm-white)]"
-          style={{ color: "var(--ash)" }}
-        >
-          <ArrowLeft size={15} style={{ color: "var(--violet)" }} />
-          {d.statsPage.back}
-        </Link>
-        <LangToggle lang={lang} onClick={() => setLang(lang === "en" ? "es" : "en")} reduce={!!reduce} />
-      </div>
-
-      <header className="relative z-10 mt-8 text-center">
+      <header className="relative z-10">
         <div className="eyebrow">{d.statsPage.eyebrow}</div>
-        <h1 className="font-serif-display mx-auto mt-3 max-w-[16ch] text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="font-serif-display mt-3 text-[36px] font-medium leading-tight sm:text-[44px]">
           {d.statsPage.title}
         </h1>
-        <p className="mt-2 text-[14px]" style={{ color: "var(--ash-dim)" }}>
+        <p className="mt-3 max-w-xl text-[16px]" style={{ color: "var(--text-2)" }}>
           {d.statsPage.subtitle}
         </p>
       </header>
 
-      <div className="relative z-10 mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="relative z-10 mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon={<Users size={18} />} label={d.statsPage.totalGuardians} value={totalGuardians} reduce={!!reduce} delay={0} />
         <StatCard icon={<Flame size={18} />} label={d.statsPage.totalBrasas} value={totalBrasas} reduce={!!reduce} delay={0.05} />
         <StatCard icon={<Swords size={18} />} label={d.statsPage.totalRounds} value={totalRounds} reduce={!!reduce} delay={0.1} />
@@ -74,7 +64,7 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
           transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.18 }}
         >
           <Zap size={18} style={{ color: "var(--spark)" }} />
-          <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+          <span className="text-[14px]" style={{ color: "var(--ash)" }}>
             {d.statsPage.topGainer}
           </span>
           <Link
@@ -98,7 +88,7 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
           transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.2 }}
         >
           <Crown size={18} style={{ color: "var(--gold)" }} />
-          <span className="text-[13px]" style={{ color: "var(--ash)" }}>
+          <span className="text-[14px]" style={{ color: "var(--ash)" }}>
             {d.statsPage.mostActive}
           </span>
           <Link
@@ -117,15 +107,15 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
         animate={reduce ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: EASE_OUT, delay: 0.25 }}
       >
-        <div className="text-[13px]" style={{ color: "var(--ash)" }}>
+        <div className="text-[14px]" style={{ color: "var(--ash)" }}>
           {d.statsPage.badgeDistribution}
         </div>
         <div className="mt-3 flex flex-col gap-2">
           {tierCounts.map(({ tier, count }) => (
             <div key={tier.key} className="flex items-center gap-3">
               <span
-                className="font-mono-num w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-[10px] uppercase tracking-wider"
-                style={{ color: tier.color, border: `1px solid ${tier.color}` }}
+                className="w-28 shrink-0 text-[13px]"
+                style={{ color: "var(--text-2)" }}
               >
                 {d.badges[tier.key as keyof typeof d.badges]}
               </span>
@@ -146,6 +136,7 @@ export function StatsPage({ entries, gainer }: { entries: Guardian[]; gainer?: {
         </div>
       </motion.div>
     </main>
+    </>
   );
 }
 
@@ -159,14 +150,14 @@ function tierBelow(min: number): number | undefined {
 function StatCard({ icon, label, value, reduce, delay }: { icon: ReactNode; label: string; value: number; reduce: boolean; delay: number }) {
   return (
     <motion.div
-      className="card flex flex-col items-center gap-1.5 p-4 text-center"
+      className="card flex flex-col gap-2 p-5"
       initial={reduce ? undefined : { opacity: 0, y: 14 }}
       animate={reduce ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: EASE_OUT, delay }}
     >
       <span style={{ color: "var(--ember)" }}>{icon}</span>
-      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-xl font-semibold" />
-      <span className="text-[11px]" style={{ color: "var(--ash-dim)" }}>
+      <TickerNumber value={value} reduce={reduce} className="font-mono-num text-[28px] font-medium leading-none" />
+      <span className="text-[13px]" style={{ color: "var(--ash-dim)" }}>
         {label}
       </span>
     </motion.div>
