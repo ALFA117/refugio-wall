@@ -19,6 +19,7 @@ export default async function ComparePage({ searchParams }: { searchParams: { a?
   return (
     <CompareView
       entries={entries}
+      source={bundle.source}
       a={find(searchParams.a)}
       b={find(searchParams.b)}
       rankA={rankOf(searchParams.a)}

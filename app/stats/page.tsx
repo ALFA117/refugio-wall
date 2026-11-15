@@ -17,5 +17,5 @@ export const metadata: Metadata = {
 export default async function StatsRoute() {
   const bundle = await getLeaderboardBundle();
   const gainer = topGainer(await getHistory());
-  return <StatsPage entries={bundle.frames.all} gainer={gainer} />;
+  return <StatsPage entries={bundle.frames.all} source={bundle.source} gainer={gainer} />;
 }
