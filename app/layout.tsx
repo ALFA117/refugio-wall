@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { Fraunces } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
-// Self-hosted at build time (no runtime request to Google's CDN, no CLS, no CSP risk).
+// Self-hosted (no runtime request to Google's CDN, no CLS, no CSP risk).
 // Fraunces: a soft, slightly dramatic serif with deep optical sizing — carries the
 // "firelight and old stories" mood better than a generic system serif fallback.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
+// Read from the @fontsource-variable package rather than next/font/google: the build no
+// longer depends on Google Fonts answering the CI runner with a parseable stylesheet
+// (it started returning a file URL next/font could not read, failing every build).
+// "standard" = the wght + opsz axes, the same ones Google served.
+const fraunces = localFont({
+  src: [
+    { path: "../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-standard-normal.woff2", weight: "100 900", style: "normal" },
+    { path: "../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-standard-italic.woff2", weight: "100 900", style: "italic" },
+  ],
   variable: "--font-display",
   display: "swap",
 });

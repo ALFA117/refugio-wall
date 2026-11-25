@@ -8,7 +8,7 @@ import { test, expect } from "@playwright/test";
 test("home loads with the leaderboard and language toggle", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toContainText("Guardians");
-  const langToggle = page.getByRole("button", { name: "Switch language" });
+  const langToggle = page.getByRole("button", { name: "Cambiar a español" });
   await expect(langToggle).toBeVisible();
   await langToggle.click();
   await expect(page.locator("html")).toHaveAttribute("lang", "es");
@@ -22,7 +22,9 @@ test("demo page loads and shows the play button", async ({ page }) => {
 test("a real guardian profile resolves", async ({ page }) => {
   await page.goto("/guardians/emberkeeper.eth");
   await expect(page.locator("h1")).toHaveText("emberkeeper.eth");
-  await expect(page.getByText(/Rank #1/)).toBeVisible();
+  // The profile's facts band: a "Rank" term with "#1" as its value.
+  const rank = page.getByRole("term").filter({ hasText: /^Rank$/ }).locator("xpath=..");
+  await expect(rank.getByRole("definition")).toContainText("#1");
 });
 
 test("an unknown guardian shows a 404 with a suggestion when close", async ({ page }) => {
@@ -64,7 +66,7 @@ test.describe("first-visit onboarding", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Got it" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
     // A real click on the language toggle must land now that nothing is covering it.
-    await page.getByRole("button", { name: "Switch language" }).click();
+    await page.getByRole("button", { name: "Cambiar a español" }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
   });
 
