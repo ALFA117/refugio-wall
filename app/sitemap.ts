@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getLeaderboardBundle } from "@/lib/leaderboard";
 
-const BASE = "https://wall-of-guardians.vercel.app";
+const BASE = "https://refugio-wall.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const bundle = await getLeaderboardBundle();

@@ -28,7 +28,7 @@ const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font
 // Canonical host — this project also answers on refugio-azure.vercel.app and a few other
 // claimed aliases (all via `vercel domains add`, so they follow every deploy); this one is
 // the clearest/most memorable and is what metadata, canonical links and the sitemap point to.
-const CANONICAL_URL = "https://wall-of-guardians.vercel.app";
+const CANONICAL_URL = "https://refugio-wall.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_URL),

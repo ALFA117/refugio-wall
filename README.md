@@ -4,8 +4,8 @@
 
 ### The public leaderboard for Refugio, a Decentraland campfire that only burns when people show up.
 
-[![Live site](https://img.shields.io/badge/Live_site-wall--of--guardians.vercel.app-E8743B?style=for-the-badge&logo=vercel&logoColor=white)](https://wall-of-guardians.vercel.app)
-[![Play the demo](https://img.shields.io/badge/Play_the_demo-no_install-1a1a1a?style=for-the-badge)](https://wall-of-guardians.vercel.app/demo)
+[![Live site](https://img.shields.io/badge/Live_site-refugio--wall.vercel.app-E8743B?style=for-the-badge&logo=vercel&logoColor=white)](https://refugio-wall.vercel.app)
+[![Play the demo](https://img.shields.io/badge/Play_the_demo-no_install-1a1a1a?style=for-the-badge)](https://refugio-wall.vercel.app/demo)
 [![The scene](https://img.shields.io/badge/The_scene-ALFA117%2FRefugio-6d4bd1?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ALFA117/Refugio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge)](LICENSE)
 
@@ -22,7 +22,7 @@
 
 <img src="docs/img/hero.jpg" alt="Wall of Guardians on a laptop (the leaderboard) and on a phone (the playable feed-the-fire demo)" width="100%" />
 
-**[▶ Open the Wall](https://wall-of-guardians.vercel.app)** · **[Play the demo](https://wall-of-guardians.vercel.app/demo)** · **[How it works](#-how-the-data-flows)** · **[Architecture notes](docs/ARCHITECTURE.md)**
+**[▶ Open the Wall](https://refugio-wall.vercel.app)** · **[Play the demo](https://refugio-wall.vercel.app/demo)** · **[How it works](#-how-the-data-flows)** · **[Architecture notes](docs/ARCHITECTURE.md)**
 
 </div>
 
